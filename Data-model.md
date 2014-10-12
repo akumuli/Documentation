@@ -12,4 +12,4 @@ if (status == AKU_ELATE_WRITE) {
 }
 ```
 
-All data in akumuli is immutable. You can't change any existing tuples element or delete it.
+All data in akumuli is immutable. You can't change any existing tuple element or delete it.
