@@ -1,0 +1,1 @@
+Akumui stores data in large binary files with fixed size. This files is called volumes, each volume is 4Gb in size. When you create database, you need to specify number of volumes that will be used to store data. Volumes organaized in ring buffer.
