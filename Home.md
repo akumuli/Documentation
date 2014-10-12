@@ -1,5 +1,7 @@
 Welcome to the Akumuli wiki!
 
-### [Error handling](Error-handling)
-
-### [Logging](Logging)
+* [Data model](Data-model)
+* [Storage organization](Storage-organization)
+* [Compression](Compression)
+* [Error handling](Error-handling)
+* [Logging](Logging)
