@@ -7,6 +7,15 @@ if (!aku_open_database(...)) {
 ```
 All error codes that represents error starts with AKU_E prefix, for example `AKU_EBUSY`, `AKU_EOVERFLOW` etc. There is special error code - `AKU_EGENERAL` that represents any error, usually if this error is unexpected but doesn't severe enough to trigger panic or if there is several errors that can't be mapped to akumuli error codes. Rule of thumb here - you didn't need to handle `AKU_EGENERAL` in a special way.
 
+Every error code can be converted to string using `aku_error_message` akumuli API call:
+```cpp
+auto status = aku_open_database(...);
+if (status != AKU_SUCCESS) {
+    cerr << "can't open database " << aku_error_message(status) << endl;
+}
+```
+This function doesn't allocates memory.
+
 Akumuli doesn't uses exceptions for anything instead panic. If akumuli is faced with unrecoverable error - it throws exception, the only puprose of this exception - generate core dump. If this behavior is not desired - you can implement your own panic handler.
 
 Panic handler is a callback function with signature:
