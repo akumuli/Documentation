@@ -2,10 +2,10 @@
 
 ### Writing
 ```cpp
-aku_Status aku_add_sample(aku_Database* db, 
-                          aku_ParamId param_id, 
-                          aku_TimeStamp timestamp, 
-                          aku_MemRange value);
+aku_Status aku_write(aku_Database* db, 
+                     aku_ParamId param_id, 
+                     aku_TimeStamp timestamp, 
+                     aku_MemRange value);
 ```
 Add single value to database.
 * `db` - pointer to database instance
