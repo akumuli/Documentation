@@ -138,7 +138,7 @@ void aku_global_search_stats(aku_SearchStats* rcv_stats, bool reset=false);
 >* _reset_ reset all counter if true
 
 ```cpp
-AKU_EXPORT void aku_global_storage_stats(aku_Database *db, aku_StorageStats* rcv_stats);
+void aku_global_storage_stats(aku_Database *db, aku_StorageStats* rcv_stats);
 ```
 >Get storage stats.
 >* _db_ database instance.
