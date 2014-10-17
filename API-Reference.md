@@ -76,7 +76,28 @@ aku_Status aku_write(aku_Database* db,
 >_Returns_ status code. AKU_SUCCESS - everything OK. AKU_EOVERFLOW - page rotation is triggered, value is not writen to the storage. User must call function again.
 >This function must be called from writer thread.
 
-### Reading
+### Queries
+
+```cpp
+aku_SelectQuery* aku_make_select_query(aku_TimeStamp begin,
+                                       aku_TimeStamp end, 
+                                       uint32_t      n_params, 
+                                       aku_ParamId*  params);
+```
+>Create select query with single parameter-id
+
+```cpp
+aku_Cursor* aku_select(aku_Database* db, aku_SelectQuery* query);
+```
+>brief Execute query
+>* _query_ data structure representing search query
+>_Rreturns_ new cursor.
+
+```cpp
+void aku_close_cursor(aku_Cursor* pcursor);
+```
+>Close cursor
+>* _pcursor_ pointer to cursor.
 
 ```cpp
 int aku_cursor_read_columns ( 	
@@ -97,5 +118,14 @@ int aku_cursor_read_columns (
 
 >every output parmeter can be null if we doesn't interested in it's value 
 
+```cpp
+AKU_EXPORT bool aku_cursor_is_done(aku_Cursor* pcursor);
+```
+>Check cursor state.
+
+```cpp
+bool aku_cursor_is_error(aku_Cursor* pcursor, int* out_error_code_or_null);
+```
+>Check cursor error state.
 
 ### Monitoring
