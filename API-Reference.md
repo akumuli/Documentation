@@ -1,4 +1,73 @@
+
+### Utility functions
+
+```cpp
+void aku_initialize(aku_panic_handler_t optional_panic_handler=0);
+```
+
+This function must be called before any other library function.
+
+* `optional_panic_handler` function to alternative panic handler
+
+```cpp
+const char* aku_error_message(int error_code);
+```
+
+Convert error code to error message. Function returns pointer to statically allocated string there is no need to free it.
+
+
+```cpp
+void aku_console_logger(int tag, const char* message);
+```
+
+Default logger that is used if no logging function is specified. Exported for testing reasons, no need to use it explicitly.
+
+
+AKU_EXPORT void aku_destroy(void* any);
+
+Destroy any object created with `aku_make_XXX` function
+
+
 ### Database management functions
+
+```cpp
+apr_status_t aku_create_database( const char*  file_name
+                                , const char*  metadata_path
+                                , const char*  volumes_path
+                                , int32_t      num_volumes
+                                // optional args
+                                , const uint32_t *compression_threshold
+                                , const uint64_t *window_size
+                                , const uint32_t *max_cache_size
+                                , aku_printf_t logger
+                                );
+```
+
+Creates storage for new database on the hard drive
+
+* file_name database file name
+* metadata_path path to metadata file
+* volumes_path path to volumes
+* num_volumes number of volumes to create
+
+**Returns** APR errorcode or APR_SUCCESS
+
+```cpp
+aku_Database* aku_open_database(const char *path, aku_FineTuneParams parameters);
+```
+
+Open recenlty create storage.
+
+* path path to storage metadata file
+* parameters open parameters
+
+**Returns** pointer to new db instance, null if db doesnt exists.
+
+```cpp
+AKU_EXPORT void aku_close_database(aku_Database* db);
+```
+
+Close database. Free resources.
 
 ### Writing
 ```cpp
@@ -18,7 +87,7 @@ This function must be called from writer thread.
 
 ### Reading
 ```cpp
-AKU_EXPORT int aku_cursor_read_columns 	( 	
+int aku_cursor_read_columns ( 	
         aku_Cursor*     pcursor,
         aku_TimeStamp*  timestamps,
         aku_ParamId*    params,
