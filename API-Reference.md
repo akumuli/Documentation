@@ -1,33 +1,32 @@
 
 ### Utility functions
----
+
 ```cpp
 void aku_initialize(aku_panic_handler_t optional_panic_handler=0);
 ```
+> This function must be called before any other library function.
 
->> This function must be called before any other library function.
+>* `optional_panic_handler` function to alternative panic handler
 
-* `optional_panic_handler` function to alternative panic handler
-
----
 ```cpp
 const char* aku_error_message(int error_code);
 ```
 
->> Convert error code to error message. Function returns pointer to statically allocated string there is no need to free it.
+> Convert error code to error message. Function returns pointer to statically allocated string there is no need to free it.
 
 
----
 ```cpp
 void aku_console_logger(int tag, const char* message);
 ```
 
->> Default logger that is used if no logging function is specified. Exported for testing reasons, no need to use it explicitly.
+>Default logger that is used if no logging function is specified. Exported for testing reasons, no need to use it explicitly.
 
 
-AKU_EXPORT void aku_destroy(void* any);
+```cpp
+void aku_destroy(void* any);
+```
 
->> Destroy any object created with `aku_make_XXX` function
+>Destroy any object created with `aku_make_XXX` function
 
 
 ### Database management functions
