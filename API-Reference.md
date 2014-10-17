@@ -128,4 +128,18 @@ bool aku_cursor_is_error(aku_Cursor* pcursor, int* out_error_code_or_null);
 ```
 >Check cursor error state.
 
-### Monitoring
+### Stats and counters
+
+```cpp
+void aku_global_search_stats(aku_SearchStats* rcv_stats, bool reset=false);
+```
+>Get search counters.
+>* _rcv_stats_ pointer to `aku_SearchStats` structure that will be filled with data.
+>* _reset_ reset all counter if true
+
+```cpp
+AKU_EXPORT void aku_global_storage_stats(aku_Database *db, aku_StorageStats* rcv_stats);
+```
+>Get storage stats.
+>* _db_ database instance.
+>* _rcv_stats_ pointer to destination
