@@ -14,3 +14,18 @@ This function will create new database instance on disk. First argument of the c
 Last four parameter can be used to specify optional configuration parameters, we don't need this at this moment.
 
 This call returns APR status, it can be compared to `APR_SUCCESS` constant and examined with `libapr` function `apr_strerror` to get human readable error message.
+
+Now we can open this database and do something useful with it.
+```cpp
+aku_FineTuneParams = {
+  0, 1000, 0x1000000, nullptr
+};
+aku_Database* db = aku_open_database("/tmp/test.akumuli", params);
+// check error!
+aku_Status status = aku_open_status(db);
+if (status != AKU_SUCCESS) {
+  aku_close_database(db);
+  exit(1);
+}
+```
+Function `aku_open_database` can open database that already exists. Structure `params` must contain some useful parameters, we interested in second one - 1000, this is window size. After call to aku_open_database we can check it's state with `aku_open_status` this function return status code for the open operation. Variable `db` will always contain pointer to database instance, no matter what, even if file doesn't exists. In this case we can check for error using `aku_open_error` function.
