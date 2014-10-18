@@ -29,3 +29,20 @@ if (status != AKU_SUCCESS) {
 }
 ```
 Function `aku_open_database` can open database that already exists. Structure `params` must contain some useful parameters, we interested in second one - 1000, this is window size. After call to aku_open_database we can check it's state with `aku_open_status` this function return status code for the open operation. Variable `db` will always contain pointer to database instance, no matter what, even if file doesn't exists. In this case we can check for error using `aku_open_error` function.
+
+## Writing data
+Let's write some data to our new database!
+```cpp
+for(uint64_t i = 0; i < 1000000; i++) {
+  aku_MemRange memr;
+  memr.address = (void*)&1;
+  memr.length = sizeof(1);
+  aku_Status status = aku_write(db, 42, i, memr);
+  if (status != AKU_SUCCESS && status != AKU_EBUSY) {
+    exit(1);
+  }
+}
+```
+This code will write one million values to the database. First parameter to `aku_write` function is previously opened database instance, second parameter is a parameter id (sequence id), third parameter `i` is a timestamp, and last `memr` is memory range that points to payload - useful data that we can send to database.
+
+## Reading
