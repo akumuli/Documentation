@@ -1,5 +1,6 @@
 Welcome to the Akumuli wiki!
 
+* [Getting started](Getting-started)
 * [Data model](Data-model)
 * [Storage organization](Storage-organization)
 * [Data integrity guarantees](Data-integrity-guarantees)
