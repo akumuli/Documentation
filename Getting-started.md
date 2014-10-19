@@ -1,4 +1,3 @@
-## Beginning
 All Akumuli functions starts with `aku` prefix (macros starts with the same uppercase prefix).
 You need to call `aku_initialize` first, before you call any other function.
 
