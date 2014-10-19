@@ -41,8 +41,63 @@ for(uint64_t i = 0; i < 1000000; i++) {
   if (status != AKU_SUCCESS && status != AKU_EBUSY) {
     exit(1);
   }
+  if (status == AKU_EBUSY) {
+    status = aku_write(db, 42, i, memr);
+    if (status != AKU_SUCCESS) {
+      exit(1);
+    }
+  }
 }
 ```
 This code will write one million values to the database. First parameter to `aku_write` function is previously opened database instance, second parameter is a parameter id (sequence id), third parameter `i` is a timestamp, and last `memr` is memory range that points to payload - useful data that we can send to database.
 
+If we get `AKU_EBUSY` error - we need to try to write data again, but only ones! This happens when we trying to write when some merging and syncing happening. 
+
 ## Reading
+Let's build a query and run it.
+```cpp
+aku_ParamId params[] = {42};
+aku_TimeStamp begin = 1000000ul;
+aku_TimeStamp end = 0ul;
+aku_SelectQuery* query = aku_make_select_query( begin
+                                              , end
+                                              , 1
+                                              , params);
+aku_Cursor* cursor = aku_select(db, query);
+```
+We introduce three new variables, first - `params` is list of parameter ids that we want to read, in this case we need to send only one parameter id. Second and third parameter defines time range. Note that `begin` variable is larger that `end`. This because we want to read data in reverse direction, from larger timestamps to lower.
+
+This code doesn't read data from disk, it just creates cursor object. We can read data from disk using this cursor. Let's try to actually read data!
+```cpp
+const int NUM_ELEMENTS = 0x100;
+while(!aku_cursor_is_done(cursor)) {
+    aku_Status err = AKU_SUCCESS;
+    if (aku_cursor_is_error(cursor, &err)) {
+        std::cout << aku_error_message(err) << std::endl;
+        return false;
+    }
+    aku_TimeStamp timestamps[NUM_ELEMENTS];
+    aku_PData pointers[NUM_ELEMENTS];
+    uint32_t lengths[NUM_ELEMENTS];
+    int n_entries = aku_cursor_read_columns(cursor, timestamps, 
+                                            nullptr, pointers, 
+                                            lengths, NUM_ELEMENTS);
+    for (int i = 0; i < n_entries; i++) {
+        uint64_t value = *static_cast<const uint64_t*>(pointers[i]);
+        assert(timestamp[i] == value);
+    }
+}
+```
+In first line we check that there is some data to read using `aku_cursor_is_done` function. After that we checking cursor for errors using `aku_cursor_is_error` function. If it returns true, than we get an error that can be converted to human readable form using `aku_error_message` function.
+
+After that we can read data to three arrays - `timestamps`, `pointers` and `lengths`. Note that there is no array for parameter ids! We pass `nullptr` to the function instead of it because we don't need it. All parameter ids will be the same anyway. After call to `aku_cursor_read_columns` this arrays will be filled with data elements ordered by timestamp (in reverse order). We can compare timestamp to stored value to see that everything is OK.
+
+After that we need to close cursor and database.
+```cpp
+aku_close_cursor(cursor);
+aku_close_database(db);
+```
+And finally we can remove the database completely.
+```cpp
+aku_remove_database("/tmp/test.akumuli", nullptr);
+```
