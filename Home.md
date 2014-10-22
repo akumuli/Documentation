@@ -8,4 +8,5 @@ Welcome to the Akumuli wiki!
 * [Compression](Compression)
 * [Error handling](Error-handling)
 * [Logging](Logging)
-* [API reference (incomplete)](API-Reference)
+* [API reference](API-Reference)
+* [How it works](How-it-works)
