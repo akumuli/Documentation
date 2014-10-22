@@ -1,7 +1,26 @@
+Building
+--------
+
+Akumuli uses CMake build system. CMake 2.8 or higher is required. Dependencies:
+* Boost libraries version 1.52 or higher.
+* Apache Portable Runtime (libapr).
+
+All dependencies can be installed in ubuntu 14.04 using prerequisites.sh script.
+When all dependencies installed, akumuli can be built using this commands:
+```
+> cd build_dir
+> cmake path_to_sources -G "Unix Makefiles"
+> make
+```
+
+Working with library
+--------------------
+Akumuli headers is located in `include` directory. Header "akumuli.h" contains all function definitions, "akumuli_def.h" - macrodefinitions, "version.h" - version definitions and "config.h" - configuration structure definition.
+
 All Akumuli functions starts with `aku` prefix (macros starts with the same uppercase prefix).
 You need to call `aku_initialize` first, before you call any other function.
 
-## Creating new database
+### Creating new database
 ```cpp
 apr_status_t result = aku_create_database("test", "/tmp", "/tmp", 8, 
                                           nullptr, nullptr, nullptr, nullptr);
@@ -29,7 +48,7 @@ if (status != AKU_SUCCESS) {
 ```
 Function `aku_open_database` can open database that already exists. Structure `params` must contain some useful parameters, we interested in second one - 1000, this is window size. After call to aku_open_database we can check it's state with `aku_open_status` this function return status code for the open operation. Variable `db` will always contain pointer to database instance, no matter what, even if file doesn't exists. In this case we can check for error using `aku_open_error` function.
 
-## Writing data
+### Writing data
 Let's write some data to our new database!
 ```cpp
 for(uint64_t i = 0; i < 1000000; i++) {
@@ -52,7 +71,7 @@ This code will write one million values to the database. First parameter to `aku
 
 If we get `AKU_EBUSY` error - we need to try to write data again, but only ones! This happens when we trying to write when some merging and syncing happening. 
 
-## Reading
+### Reading
 Let's build a query and run it.
 ```cpp
 aku_ParamId params[] = {42};
