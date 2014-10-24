@@ -46,7 +46,7 @@ if (status != AKU_SUCCESS) {
   exit(1);
 }
 ```
-Function `aku_open_database` can open database that already exists. Structure `params` must contain some useful parameters, we interested in second one - 1000, this is a window size. After call to aku_open_database we can check its state with `aku_open_status` this function returns status code for the open operation. Variable `db` will always contain pointer to database instance, no matter what, even if file doesn't exists. In this case we can check for error using `aku_open_error` function.
+Function `aku_open_database` can open database that already exists. Structure `params` must contain some useful parameters, we interested in second one - 1000, this is a window size. After call to aku_open_database we can check its state with `aku_open_status` this function returns status code for the open operation. Variable `db` will always contain pointer to database instance, no matter what it is, even if file doesn't exist. In this case we can check for error using `aku_open_error` function.
 
 ### Writing data
 Let's write some data to our new database!
@@ -69,7 +69,7 @@ for(uint64_t i = 0; i < 1000000; i++) {
 ```
 This code will write one million values to the database. First parameter to `aku_write` function is previously opened database instance, second parameter is a parameter id (sequence id), third parameter `i` is a timestamp, and last `memr` is memory range that points to payload - useful data that we can send to database.
 
-If we get `AKU_EBUSY` error - we need to try to write data again, but only ones! This happens when we trying to write when some merging and syncing happening. 
+If we get `AKU_EBUSY` error - we need to rewrite the data, but only ones! This happens when we try to write the data while merging or syncing.
 
 ### Reading
 Let's build a query and run it.
@@ -83,7 +83,7 @@ aku_SelectQuery* query = aku_make_select_query( begin
                                               , params);
 aku_Cursor* cursor = aku_select(db, query);
 ```
-We introduce three new variables, first - `params` is list of parameter ids that we want to read, in this case we need to send only one parameter id. Second and third parameter defines time range. Note that `begin` variable is larger that `end`. This because we want to read data in reverse direction, from larger timestamps to lower.
+We introduce three new variables. The first one - `params` is a list of parameter ids that we want to read, in this case we need to send only one parameter id. Second and third parameters define time range. Note that `begin` variable is larger that `end`. This is because we want to read the data in reverse direction, from larger timestamps to lower.
 
 This code doesn't read data from disk, it just creates cursor object. We can read data from disk using this cursor. Let's try to actually read data!
 ```cpp
