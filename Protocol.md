@@ -27,6 +27,8 @@ Id must be followed by the payload. Payload can be encoded in different ways.
   + _"+balancer.mem\r\n+2014-12-10T07:43:43Z\r\n$22\r\n...22.bytes...\r\n"_
 
 ##### Bulk data format.
+**Planned after M2 release!**
+
 Little endian byte order should be used for all binary data. All data should be aligned by one byte boundary (no align).
 Bulk data format created to send efficiently large amounts of numeric data. Bulk data frame starts from unsigned 32-bit integer that stores number of values in the frame. This number then followed by the compressed array of timestams (delta-rle encoding should be used, values should be delta encoded first, then run-length encoded and finally, base-128 coding should be used to store all resulting integers). All timestamps should be sorted in accending order.
 Array of timestamps should be followed by array of parameter ids. Base-128 variable length encoding should be used to represent each id.
