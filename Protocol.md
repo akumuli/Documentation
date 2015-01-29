@@ -3,7 +3,7 @@ Protocol draft
 Akumuli protocol is based on [redis protocol](http://redis.io/topics/protocol).
 
 ### Writing
-To write data to akumuli you should specify id (integer or string), timestamp (string or integer) and value (string or bulk string).
+To write data to akumuli you should specify id (integer or string), timestamp (integer or string) and value (integer, string or bulk string).
 
 
 Id can be an integer or string:
