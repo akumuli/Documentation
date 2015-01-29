@@ -3,33 +3,55 @@ Protocol draft
 Akumuli protocol is based on [redis protocol](http://redis.io/topics/protocol).
 
 ### Writing
-To write data to akumuli we must specify id (string or numeric), timestamp and value (byte array or double).
-Command starts from identifier. Ids encoded very much like redis's strings and integers:
-- String id starts with '+' symbol followed by id-string and ends with CRLF, example: "+balancer.cpu\r\n".
-- Integer id starts with ':' symbol followed by numeric id and ends with CRLF, example: ":1735\r\n".
+To write data to akumuli you should specify timestamp (string or integer), value (string or bulk string) and id (integer or string).
 
-Id must be followed by the payload. Payload can be encoded in different ways.
-- Bulk string that contain binary representation. Bulk string encoded the same way as in redis protocol.
-  + _"+balancer.cpu\r\n$64\r\n...data...\r\n"_ (id - "balancer.cpu", 64 - size of the byte array)
-  + _":1735\r\n$127\r\n...data...\r\n"_ (id - 1735, 127 - size of the byte array)
-- Integer timestamp followed by the value encoded by string.
-  + _"+balancer.mem\r\n:1418224205\r\n+24.3\r\n"_ (id - "balancer.mem", timestamp - 1418224205, value - 24.3)
-  + _":1733\r\n:1418224205\r\n+24.3\r\n"_ (id - 1733, timestamp - 1418224205, value - 24.3)
-- Integer timestamp followed by the value encoded by int.
-  + _"+balancer.mem\r\n:1418224205\r\n:24\r\n"_ (value - 24)
-  + _":1733\r\n:1418224205\r\n:24\r\n"_ (value -24)
-- String timestamp followed by rather int or string value. Timestamp must be ISO 8601 encoded UTC date-time.
-  + _"+balancer.mem\r\n+2014-12-10T07:43:43Z\r\n:24\r\n"_ (timestamp - 2014-12-10T07:43:43Z, value - 24)
-  + _"+balancer.mem\r\n+2014-12-10T07:43:43Z\r\n+24.3\r\n"_ (timestamp - 2014-12-10T07:43:43Z, value - 24.3)
-- Array of interleaved timestamps and values. Size fo the array should be even and each individual timestamp or value can be encoded rather by integer or string.
-  + _":1734\r\n*4\r\n:1418224205\r\n+233.23\r\n:1418222534\r\n:234\r\n"_ (id - 1734, 4 - size of the array, array - [ts - 1418224205, val - 233.23, ts - 1418222534, val - 234])
-- String or integer timestamp followed by bulk string, content of the bulk string interpreted as a blob.
-  + _"+balancer.mem\r\n+2014-12-10T07:43:43Z\r\n$22\r\n...22.bytes...\r\n"_
+Timestamp:
+- Integer timestamp:
+  + _":1418224205\r\n"_
+- ISO 8601 encoded UTC date-time:
+  + _"+2014-12-10T07:43:43Z\r\n"_
 
-##### Bulk data format.
-**Planned after M2 release!**
+Timestamp should be immediately followed by the value:
+- Bulk string that contain blob. Bulk string encoded the same way as in redis protocol:
+  + _"$64\r\n...data...\r\n"_ (64 - size of the byte array)
+- Numeric value encoded by string.
+  + _"+24.3\r\n"_
+- Numeric value encoded by int.
+  + _":24\r\n"_
 
-Little endian byte order should be used for all binary data. All data should be aligned by one byte boundary (no align).
-Bulk data format created to send efficiently large amounts of numeric data. Bulk data frame starts from unsigned 32-bit integer that stores number of values in the frame. This number then followed by the compressed array of timestams (delta-rle encoding should be used, values should be delta encoded first, then run-length encoded and finally, base-128 coding should be used to store all resulting integers). All timestamps should be sorted in accending order.
-Array of timestamps should be followed by array of parameter ids. Base-128 variable length encoding should be used to represent each id.
-Ids should be followed by compressed array of values. Compression algorithm: TBD.
+Timestamp and value should be followed by id:
+- Integer id:
+  + _":112233\r\n"
+- String id should starts with parameter name and can contain list of key-value pairs separated by spaces:
+  + _"+balancers.host1.cpuload\r\n"_
+  + _"+network.loadavg host=postgres\r\n"_ parameter name is "network.loadavg" and key "host" is set to "postgres"
+
+All keys should be predefined in database schema.
+
+##### Examples
+Full message can look like this (\r\n is replaced with real newlines):
+ - String timestamp, integer value and string id with two keys:
+```
++2014-12-10T07:43:43Z
+:31
++balancers.memusage host=machine1 unit=Gb
+```
+ - Integer timestamp, string value and string id with one key:
+```
+:1418224205
++22.0
++balancers.cpuload host=machine1
+```
+ - Blob example:
+```
++2014-12-10T07:43:43Z
+$9
+500 error
++balancers.events host=machine1
+```
+- Integer timestamp, value and id:
+```
+:1418224205
+:31
+:12345
+```
