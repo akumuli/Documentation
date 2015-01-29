@@ -1,5 +1,5 @@
-Protocol draft
-==============
+Protocol specification
+======================
 Akumuli protocol is based on [redis protocol](http://redis.io/topics/protocol).
 
 ### Writing
