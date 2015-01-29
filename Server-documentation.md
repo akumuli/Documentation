@@ -1,1 +1,1 @@
-* [Protocol description (draft)](Protocol)
+* [Protocol specification](Protocol)
