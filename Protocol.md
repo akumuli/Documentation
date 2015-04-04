@@ -17,7 +17,7 @@ Id should be followed by timestamp:
 - Integer timestamp:
   + _":1418224205\r\n"_
 - ISO 8601 encoded UTC date-time:
-  + _"+2014-12-10T07:43:43Z\r\n"_
+  + _"+20141210T074343.999999\r\n"_
 
 Timestamp should be immediately followed by the value:
 - Bulk string that contain blob. Bulk string encoded the same way as in redis protocol:
@@ -35,7 +35,7 @@ Full message can look like this (\r\n is replaced with real newlines):
  - String timestamp, integer value and string id with two keys:
 ```
 +balancers.memusage host=machine1 unit=Gb
-+2014-12-10T07:43:43Z
++20141210T074343.999999999
 :31
 ```
  - Integer timestamp, string value and string id with one key:
@@ -47,7 +47,7 @@ Full message can look like this (\r\n is replaced with real newlines):
  - Blob example:
 ```
 +balancers.events host=machine1
-+2014-12-10T07:43:43Z
++20141210T074343
 $9
 500 error
 ```
