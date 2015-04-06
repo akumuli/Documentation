@@ -62,10 +62,10 @@ AKU_EXPORT void aku_close_database(aku_Database* db);
 ### Writing
 
 ```cpp
-aku_Status aku_write(aku_Database* db, 
-                     aku_ParamId param_id, 
-                     aku_TimeStamp timestamp, 
-                     aku_MemRange value);
+aku_Status aku_write_blob_raw(aku_Database* db, 
+                              aku_ParamId param_id, 
+                              aku_TimeStamp timestamp, 
+                              aku_MemRange value);
 ```
 >Add single value to database.
 >* _db_ pointer to database instance
@@ -75,6 +75,21 @@ aku_Status aku_write(aku_Database* db,
 
 >_Returns_ status code. AKU_SUCCESS - everything OK. AKU_EOVERFLOW - page rotation is triggered, value is not writen to the storage. User must call function again.
 >This function must be called from writer thread.
+
+```cpp
+aku_Status aku_write_double_raw(aku_Database* db, 
+                                aku_ParamId param_id, 
+                                aku_TimeStamp timestamp, 
+                                double value);
+```
+>Adds single value to database.
+>* _db_ pointer to database instance
+>* _param_id_ parameter id
+>* _timestamp_ timestamp
+>* _value_ 64-bit float value
+
+>_Returns_ status code. AKU_SUCCESS - everything OK. AKU_EOVERFLOW - page rotation is triggered, value is not writen to the storage. User should call this function again.
+>This function must be called only from writer thread.
 
 ### Queries
 
