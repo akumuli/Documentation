@@ -10,8 +10,8 @@ When you start writing to the database, your writes go to the first volume (vol1
 ### Temporary volumes
 Sometimes you can see extra an volume with a 'tmp' extension. It's created when tail volume needs to be recycled but somebody is still reading data from it. In this case akumuli can't stop the client or wait unitl read is completed, it simply copies existing tail volume and creates a new one. After all cursors reading this 'tmp' volume have finished, it will be deleted.
 
-### Metadata file
-All volumes are listed in a metadata file. Metadata file has extension ".akumuli", all data stored in metadata file is in JSON format.
+### Metadata storage
+All parameters, volumes and series names is stored in sqlite3 database. Database file has extension ".akumuli", it can be opened and queried using sqlite3 command line tool.
 
 ### API
 New storage can be created using akumuli API using function aku_create_database.
