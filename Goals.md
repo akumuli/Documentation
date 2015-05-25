@@ -12,7 +12,7 @@
         * Query by content: kNN, full sequence matching, subsequence matching;
         * Clustering: full sequence clustering, subsequence clustering;
         * Classification;
-        * Segmentation (summaryzation);
+        * Segmentation (summarization);
         * Prediction;
         * Anomaly detection;
         * Motif discovery;
