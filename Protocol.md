@@ -5,8 +5,7 @@ Akumuli protocol is based on [redis protocol](http://redis.io/topics/protocol).
 ### Writing
 To write data to akumuli you should specify id (integer or string), timestamp (integer or string) and value (integer, string or bulk string).
 
-
-Id can be an integer or string:
+Id should be a string:
 - Integer id:
   + _":112233\r\n"
 - String id should starts with parameter name and can contain list of key-value pairs separated by spaces:
@@ -20,15 +19,11 @@ Id should be followed by timestamp:
   + _"+20141210T074343.999999\r\n"_
 
 Timestamp should be immediately followed by the value:
-- Bulk string that contain blob. Bulk string encoded the same way as in redis protocol:
-  + _"$64\r\n...data...\r\n"_ (64 - size of the byte array)
 - Numeric value encoded by string.
   + _"+24.3\r\n"_
 - Numeric value encoded by int.
   + _":24\r\n"_
 
-
-All keys should be predefined in database schema.
 
 ##### Examples
 Full message can look like this (\r\n is replaced with real newlines):
@@ -43,17 +38,4 @@ Full message can look like this (\r\n is replaced with real newlines):
 +balancers.cpuload host=machine1
 :1418224205
 +22.0
-```
- - Blob example:
-```
-+balancers.events host=machine1
-+20141210T074343
-$9
-500 error
-```
-- Integer timestamp, value (33) and id (12345):
-```
-:12345
-:1418224205
-:33
 ```
