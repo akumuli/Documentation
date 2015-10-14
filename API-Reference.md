@@ -1,3 +1,5 @@
+This reference is outdated, see akumuli.h header for the most recent docs.
+==========================================================================
 
 ### Utility functions
 
