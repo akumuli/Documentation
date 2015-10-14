@@ -12,3 +12,8 @@ Sometimes you will see a volume with a '*.tmp' extension. This volume is created
 
 ### Metadata storage
 All parameters, volumes and series names are stored in sqlite3 database. Database file has ".akumuli" extension, it can be opened and queried using sqlite3 command line tool.
+
+### Compression
+Akumuli can compress data using specialized compression algorithm. It uses DeltaRLE + LEB128 for timestamps and ids. For values algorithm described in this paper is used: http://users.ices.utexas.edu/~burtscher/papers/dcc06.pdf
+
+Compression can't be disabled.
