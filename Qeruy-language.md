@@ -65,12 +65,12 @@ Time-series query consist of serveral components:
 
 ```json
 {
-    "sample": [ ... ]
-     "range": { ... }
-    "metric":   ...
-     "where": { ... }
-  "group-by": { ... }
-    "output": { ... }
+    "sample": "...",
+     "range": "...",
+    "metric": "...",
+     "where": "...",
+  "group-by": "...",
+    "output": "..."
 }
 ```
 
@@ -80,7 +80,6 @@ Range field is used to set time bounds.
 
 ```json
 {
-    ...
     "range": {
         "from": "20160102T123000.000000",
         "to":   "20160102T123010.000000"
@@ -95,7 +94,6 @@ Epoch. Example:
 
 ```json
 {
-    ...
     "range": {
         "from": "1453137644600000000",
         "to":   "1453137644799999999"
@@ -133,7 +131,6 @@ metric name will be included.
 
 ```json
 {
-    ...
     "metric": "cpu",
     "range": {
         "from": "20160102T123000.000000",
@@ -145,3 +142,114 @@ metric name will be included.
 Note that this field is optional (unlike "range" field that is mandatory).
 
 #### Where field
+
+Query results can be further filtered using "where" field.
+
+```json
+{
+    "where": {
+        "region": [ "europe", "us-east" ]
+    }
+    "metric": "cpu",
+    "range": {
+        "from": "20160102T123000.000000",
+        "to":   "20160102T123010.000000" }
+}
+```
+
+This query will retreive only series from `cpu` metric that have `region` tag which value is set to `europe`
+or `us-east`. Note that "metric" field is mandatory is you're using "where" field.
+
+#### Group-by field
+
+Suppose that you're have the time-series that stores valve pressure. Pressure on each valve is measured by
+two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. If you
+query this series you will get the following results:
+
+```
++pressure_kPa valve_num=0 sensor_num=0
++20160118T171000.000000000
++204.0
++pressure_kPa valve_num=0 sensor_num=1
++20160118T171000.000000000
++204.1
++pressure_kPa valve_num=1 sensor_num=0
++20160118T171000.000000000
++208.0
++pressure_kPa valve_num=1 sensor_num=1
++20160118T171000.000000000
++208.2
+...
+```
+
+Each combination of sensor and valve produces it's own time-series. If you want to group data only by valve
+you can use "group-by" field.
+
+```json
+{
+    "group-by": { "tag": "valve_num" }
+}
+```
+
+As a result series that have the same `valve_num` tag value will be joined into the same series. Series that
+don't have "valve_num" tag will be excluded from search results. Output will loock like this:
+
+```
++pressure_kPa valve_num=0
++20160118T171000.000000000
++204.0
++pressure_kPa valve_num=0
++20160118T171000.000000000
++204.1
++pressure_kPa valve_num=1
++20160118T171000.000000000
++208.0
++pressure_kPa valve_num=1
++20160118T171000.000000000
++208.2
+...
+```
+
+Note that series name is changed now. It contains only those tags that's listed in `group-by` field. You can
+use several tags in group-by field using the following syntax: `{ "tag": [ "foo", "bar" ] }` (in this case
+resulting series names will have both tags `foo` and `bar`).
+
+Group by field can be used to group values by time using the following syntax:
+
+```json
+{
+    "group-by": { "time": "10ms" }
+}
+```
+
+In this case all results will be splitted into 10ms bins and only one value for each bin and series will be
+added to output (this require corresponding sampling method in "sample" field, more on this latter). We can
+add this field to our valve example:
+
+```json
+{
+    "sample": [ { "name": "paa" } ],
+    "group-by": { "tag": "valve_num", "time": "1s" }
+}
+```
+
+and this will produce the following output:
+
+```
++pressure_kPa valve_num=0
++20160118T171000.000000000
++204.05
++pressure_kPa valve_num=1
++20160118T171000.000000000
++208.1
++pressure_kPa valve_num=0
++20160118T171001.000000000
++204.06
++pressure_kPa valve_num=1
++20160118T171001.000000000
++208.2
+...
+```
+
+in this case values from both sensors from the same valve are groupped by valve and by one second time
+interval and averaged.
