@@ -333,6 +333,12 @@ parameters `alphabet_size` and `window_width`.
 
 ##### Piecewise Aggregate Approximation of time series.
 
+PAA is a dimentionality reduction technique. It transforms irregullar time-series into the regullar one. To 
+do this data should be divided into equaly sized bins. After that all data points in each bin are aggregated
+producing single value. PAA transformation can be viewed as aproximation using box functions.
+
+![PAA diagram](/images/PAA.png)
+
 ##### Random sampling.
 
 ##### SAX transformation.
