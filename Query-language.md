@@ -337,7 +337,7 @@ PAA is a dimentionality reduction technique. It transforms irregullar time-serie
 do this data should be divided into equaly sized bins. After that all data points in each bin are aggregated
 producing single value. PAA transformation can be viewed as aproximation using box functions.
 
-[[https://github.com/Akumuli/Akumuli/blob/master/imgages/PAA.png|alt=PAA diagram]]
+[[imgages/PAA.png|alt=PAA diagram]]
 
 ##### Random sampling.
 
