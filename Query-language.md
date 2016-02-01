@@ -315,5 +315,28 @@ Each dictionary can describe single operation. For example:
 ```
 
 In this sample we're using `paa` transformation on data. This sampler requires `group-by:time` field.
-...
+All samplers can be diveded into two groups: samplers that requires `group-by:time` field and samplers that
+doesn't requires anything. Samplers can be pipelined. In this case each data sample will be passed through all
+samplers of the pipeline. Example:
 
+```json
+{
+    "sample": [ { "name": "paa" },
+                { "name": "sax", "alphabet_size": 8, "window_width": 10 }
+              ],
+    "group-by": { "tag": "valve_num", "time": "1s" }
+}
+```
+
+In this case we're using PAA transformation followed by SAX transformation. SAX transformation has two extra
+parameters `alphabet_size` and `window_width`.
+
+##### Piecewise Aggregate Approximation of time series.
+
+##### Random sampling.
+
+##### SAX transformation.
+
+##### Frequent items and heavy hitters.
+
+##### Anomaly detection.
