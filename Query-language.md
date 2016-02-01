@@ -70,7 +70,9 @@ Time-series query consist of serveral components:
     "metric": "...",
      "where": "...",
   "group-by": "...",
-    "output": "..."
+    "output": "...",
+     "limit": "...",
+    "offset": "..."
 }
 ```
 
@@ -119,8 +121,8 @@ Query results will look like this:
 ```
 
 Note that timestamps are increasing. This is because timestamp in "from" field is greater than timestamp in
-"to" field. We can reverce it by swapping "from" and "to" fields. If timestamp in "to" field is less then
-timestamp in "from" field Akumuli will return results in backward direction.
+"to" field. We can reverse output order by swapping "from" and "to" fields. If timestamp in "to" field is 
+less then timestamp in "from" field Akumuli will return results in backward direction.
 
 ##### TBD: continuous queries
 
@@ -158,13 +160,14 @@ Query results can be further filtered using "where" field.
 ```
 
 This query will retreive only series from `cpu` metric that have `region` tag which value is set to `europe`
-or `us-east`. Note that "metric" field is mandatory is you're using "where" field.
+or `us-east`. Note that "metric" field is mandatory if you're using "where" field.
 
 #### Group-by field
 
-Suppose that you're have the time-series that stores valve pressure. Pressure on each valve is measured by
-two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. If you
-query this series you will get the following results:
+Suppose that you're have the time-series of the valve pressure. Pressure in each valve is measured by
+two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we
+have `pressure_kPa` metric with two tags: `valve_num` and `sensor_num`. If you query this series you will 
+get the following results:
 
 ```
 +pressure_kPa valve_num=0 sensor_num=0
@@ -191,8 +194,8 @@ you can use "group-by" field.
 }
 ```
 
-As a result series that have the same `valve_num` tag value will be joined into the same series. Series that
-don't have "valve_num" tag will be excluded from search results. Output will loock like this:
+As result series that shares the same `valve_num` tag value will be joined together. Series that
+don't have "valve_num" tag will be excluded from search results. Output will look like this:
 
 ```
 +pressure_kPa valve_num=0
@@ -253,3 +256,64 @@ and this will produce the following output:
 
 in this case values from both sensors from the same valve are groupped by valve and by one second time
 interval and averaged.
+
+
+##### Output field
+
+You can change query results formatting method using `output` field. Example:
+
+```json
+{
+    "output": { "format": "csv" },
+}
+```
+
+This query will return CSV formatted output. `Format` field can take two values: `csv` or `resp`.
+
+```
+test tag=Foo, 20160118T173724.646397000, 999996
+test tag=Foo, 20160118T173724.647397000, 999997
+test tag=Foo, 20160118T173724.648397000, 999998
+test tag=Foo, 20160118T173724.649397000, 999999
+```
+
+You can change timestamp representation using `timestamp` field:
+
+```json
+{
+    "output": { "format": "csv", "timestamp": "raw" }
+}
+```
+
+This query will return CSV formatted output with timestamps formatted as integers:
+
+```
+test tag=Foo, 1453127844646397000, 999996
+test tag=Foo, 1453127844647397000, 999997
+test tag=Foo, 1453127844648397000, 999998
+test tag=Foo, 1453127844649397000, 999999
+```
+
+`Timestamp` field can take only two values: `iso` or `raw`.
+
+
+##### Limit and offset fields.
+
+You can use `limit` and `offset` query fields to limit number of returned tuples and to skip some tuples at
+the begining of the query output. This fields works the same as LIMIT and OFFSET clauses in SQL.
+
+#### Sample field.
+
+Sample field can be used to transform time-series data. This field should contain a list of dictionaries.
+Each dictionary can describe single operation. For example:
+
+```json
+{
+    "sample": [ { "name": "paa" } ],
+    "group-by": { "tag": "valve_num", "time": "1s" }
+}
+```
+
+In this sample we're using `paa` transformation on data. This sampler requires `group-by:time` field.
+...
+
