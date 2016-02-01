@@ -151,7 +151,7 @@ Query results can be further filtered using "where" field.
 {
     "where": {
         "region": [ "europe", "us-east" ]
-    }
+    },
     "metric": "cpu",
     "range": {
         "from": "20160102T123000.000000",
@@ -337,11 +337,60 @@ PAA is a dimentionality reduction technique. It transforms irregullar time-serie
 do this data should be divided into equaly sized bins. After that all data points in each bin are aggregated
 producing single value. PAA transformation can be viewed as aproximation using box functions.
 
-[[imgages/PAA.png|alt=PAA diagram]]
+[[images/PAA.png|alt=PAA diagram]]
+
+Different functions can be used with PAA transform. By default data points in each bin aggregated using `mean`
+function but you can use `paa-min`, `paa-max`, `paa-first`, `paa-last` or `paa-median`. 
+In this cases query will look like this:
+
+```json
+{
+    "sample": [ { "name": "paa-min" } ]
+}
+```
+
+In `paa-first` and `paa-last` variants data point with smallers or largest timestamp will be used as a 
+resulting value. In `paa-min` and `paa-max` variants data point with min or max value will be used. With
+`paa-median` median will be computed using all data point values.
+
+If original time-series has a gap, PAA transformed time-series will have a gap too (this is subject to change,
+in future versions this behavior will be configurable).
 
 ##### Random sampling.
 
+Only reservoir sampling supported at the moment. It requires only one argument.
+
+```json
+{
+    "sample": [ { "name": "reservoir", "size": 1000 } ]
+}
+```
+
+This query will return 1000 or less random data points. This sampler is sensible to `group-by:time` field.
+If results is grouped by time, `reservoir` will return results on each time interval, for example:
+
+```json
+{
+    "sample": [ { "name": "reservoir", "size": 1000 } ],
+    "group-by": { "time": 10s }
+}
+```
+
+This query will return 1000 values (or less) every 10 seconds.
+
 ##### SAX transformation.
+
+Symbolic Aggregate approXimation is a method of converting real valued time-series into symbolic time-series.
+TBD
+
+```json
+{
+    "sample": [ { "name": "paa" },
+                { "name": "sax", "alphabet_size": 8, "window_width": 10 }
+              ],
+    "group-by": { "tag": "valve_num", "time": "1s" }
+}
+```
 
 ##### Frequent items and heavy hitters.
 
