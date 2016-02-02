@@ -381,16 +381,47 @@ This query will return 1000 values (or less) every 10 seconds.
 ##### SAX transformation.
 
 Symbolic Aggregate approXimation is a method of converting real valued time-series into symbolic time-series.
-TBD
+It requires two extra parameters: `alphabet_size` and `window_width`. First parameter is an alphabet size used
+to encode time-series. It shluld be in range [2, 20]. Second parameter `window_width` defines width of the
+sliding window used by SAX algorithm. 
+
+```json
+{
+    "sample": [ { "name": "sax", "alphabet_size": 4, "window_width": 4 } ],
+}
+```
+
+SAX transformation doesn't require `group-by:time` field but if your time-series data is irregullar you 
+should use it in conjunction PAA transform.
 
 ```json
 {
     "sample": [ { "name": "paa" },
-                { "name": "sax", "alphabet_size": 8, "window_width": 10 }
+                { "name": "sax", "alphabet_size": 4, "window_width": 4 }
               ],
     "group-by": { "tag": "valve_num", "time": "1s" }
 }
 ```
+
+Output will be a bit unusual:
+
+```
++pressure_kPa valve_num=0
++20160118T171000.000000000
++aacd
++pressure_kPa valve_num=1
++20160118T171000.000000000
++abaa
++pressure_kPa valve_num=0
++20160118T171001.000000000
++acda
++pressure_kPa valve_num=1
++20160118T171001.000000000
++cdab
+...
+```
+
+SAX has some sort of dimensionality reduction so some time-stamps may be missing.
 
 ##### Frequent items and heavy hitters.
 
