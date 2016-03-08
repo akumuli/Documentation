@@ -340,18 +340,18 @@ producing single value. PAA transformation can be viewed as aproximation using b
 [[images/PAA.png|alt=PAA diagram]]
 
 Different functions can be used with PAA transform. By default data points in each bin aggregated using `mean`
-function but you can use `paa-min`, `paa-max`, `paa-first`, `paa-last` or `paa-median`. 
+function but you can use `min-paa`, `max-paa`, `first-paa`, `last-paa` or `median-paa`. 
 In this cases query will look like this:
 
 ```json
 {
-    "sample": [ { "name": "paa-min" } ]
+    "sample": [ { "name": "min-paa" } ]
 }
 ```
 
-In `paa-first` and `paa-last` variants data point with smallers or largest timestamp will be used as a 
-resulting value. In `paa-min` and `paa-max` variants data point with min or max value will be used. With
-`paa-median` median will be computed using all data point values.
+In `first-paa` and `last-paa` variants data point with smallers or largest timestamp will be used as a 
+resulting value. In `min-paa` and `max-paa` variants data point with min or max value will be used. With
+`median-paa` median will be computed using all data point values.
 
 If original time-series has a gap, PAA transformed time-series will have a gap too (this is subject to change,
 in future versions this behavior will be configurable).
