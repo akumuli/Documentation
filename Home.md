@@ -4,3 +4,9 @@ Akumuli is a time-series database with it's own unique storage engine, designed 
 
 * [Storage engine documentation](Documentation-Index)
 * [Akumuli server documentation](Server-documentation)
+
+Technical papers
+================
+
+* [Compression algorithms](https://docs.google.com/document/d/1yLsN1j8xxnm_b0oN6rFSgWOnCHP-OlJC5pBKZQwTAPc/pub)
+* [Numeric B+tree data structure](https://docs.google.com/document/d/1jFK8E3CZSqR5IPsMGojm2LknkNyUZA7tY51N6IgzW_g/pub)
