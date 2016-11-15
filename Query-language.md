@@ -1,18 +1,24 @@
 Query language reference
 ------------------------
 
-To retreive information from Akumuli you should send HTTP POST query. Post data should contain JSON query.
+To retrieve information from Akumuli you should send HTTP POST query. Post data should contain JSON query.
 This section describes JSON query format. Data returned using chunked transfer encoding (because query result
 in Akumuli can be huge or infinite). Depending on the query result can be returned in RESP or in CSV format.
 
+### Series names
+
+Each series name consist of metric name and set of tags. Unique combination of metric and tags is used to distinguish
+between different time-series. Metric can be thought as unit of measure of the time-series, e.g. `cpu`, `mem`, `voltage`, etc. Tags, on the other hand, can be viewed as unique identifier of the object that is monitored, e.g. if you're measuring performance of the machines in the network you can use tag `host=$particular_machine_host` to distinguish between machines. 
+If you're measuring properties of some object, you will have set of series with the same set of tags and different metrics.
+
 ### Metadata query
 
-Metadata query can be used to retreive information about series. Only series names can be retreived at the
+Metadata query can be used to retrieve information about series. Only series names can be retrieved at the
 moment.
 
 ```json
 {
-    "select": "names"
+    "select": "meta:names"
 }
 ```
 
@@ -28,7 +34,7 @@ By default results returned in RESP format. This can be altered using "output" f
 
 ```json
 {
-    "select": "names",
+    "select": "meta:names",
     "output": {"format": "csv"}
 }
 ```
@@ -41,13 +47,12 @@ cpu host=Bar
 cpu host=Buz
 ```
 
-This list can be filtered using "where" and "metric" fields.
-Note that both "where" and "metric" should be used together.
+This list can be filtered by specifying metric and `where` statement.
+Note that "where" can't be used without metric.
 
 ```json
 {
-    "select": "names",
-    "metric": "cpu",
+    "select": "meta:names:cpu",
     "where": { "host": ["Foo", "Bar"] }
 }
 ```
@@ -59,15 +64,24 @@ This will return list of all series that matches search predicate (Buz is filter
 +cpu host=Bar
 ```
 
-### Scan query
-
-Time-series query consist of serveral components:
+Note that you can filter by metric without using `where` statement:
 
 ```json
 {
-    "sample": "...",
+    "select": "meta:names:mem"
+}
+```
+
+This query will return names of all series with `mem` metric.
+
+### Select query
+
+Time-series query consist of several components:
+
+```json
+{
+    "select": "...",
      "range": "...",
-    "metric": "...",
      "where": "...",
   "group-by": "...",
     "output": "...",
@@ -124,16 +138,13 @@ Note that timestamps are increasing. This is because timestamp in "from" field i
 "to" field. We can reverse output order by swapping "from" and "to" fields. If timestamp in "to" field is 
 less then timestamp in "from" field Akumuli will return results in backward direction.
 
-##### TBD: continuous queries
+#### Select field
 
-#### Metric field
-
-Each query can filter results using "metric" field. If "metric" field is set only series with corresponding
-metric name will be included.
+Each query can filter results using `select` field. This field is mandatory and can't be omitted.
 
 ```json
 {
-    "metric": "cpu",
+    "select": "cpu",
     "range": {
         "from": "20160102T123000.000000",
         "to":   "20160102T123010.000000"
@@ -141,26 +152,24 @@ metric name will be included.
 }
 ```
 
-Note that this field is optional (unlike "range" field that is mandatory).
-
 #### Where field
 
 Query results can be further filtered using "where" field.
 
 ```json
 {
+    "select": "cpu",
     "where": {
         "region": [ "europe", "us-east" ]
     },
-    "metric": "cpu",
     "range": {
         "from": "20160102T123000.000000",
         "to":   "20160102T123010.000000" }
 }
 ```
 
-This query will retreive only series from `cpu` metric that have `region` tag which value is set to `europe`
-or `us-east`. Note that "metric" field is mandatory if you're using "where" field.
+This query will retrieve only series with `cpu` metric that have `region` tag which value is set to `europe`
+or `us-east`.
 
 #### Group-by field
 
@@ -190,7 +199,8 @@ you can use "group-by" field.
 
 ```json
 {
-    "group-by": { "tag": "valve_num" }
+    "select": "pressure_kPa",
+    "group-by": [ "valve_num" ]
 }
 ```
 
@@ -217,46 +227,6 @@ Note that series name is changed now. It contains only those tags that's listed 
 use several tags in group-by field using the following syntax: `{ "tag": [ "foo", "bar" ] }` (in this case
 resulting series names will have both tags `foo` and `bar`).
 
-Group by field can be used to group values by time using the following syntax:
-
-```json
-{
-    "group-by": { "time": "10ms" }
-}
-```
-
-In this case all results will be splitted into 10ms bins and only one value for each bin and series will be
-added to output (this require corresponding sampling method in "sample" field, more on this latter). We can
-add this field to our valve example:
-
-```json
-{
-    "sample": [ { "name": "paa" } ],
-    "group-by": { "tag": "valve_num", "time": "1s" }
-}
-```
-
-and this will produce the following output:
-
-```
-+pressure_kPa valve_num=0
-+20160118T171000.000000000
-+204.05
-+pressure_kPa valve_num=1
-+20160118T171000.000000000
-+208.1
-+pressure_kPa valve_num=0
-+20160118T171001.000000000
-+204.06
-+pressure_kPa valve_num=1
-+20160118T171001.000000000
-+208.2
-...
-```
-
-in this case values from both sensors from the same valve are groupped by valve and by one second time
-interval and averaged.
-
 
 ##### Output field
 
@@ -264,6 +234,7 @@ You can change query results formatting method using `output` field. Example:
 
 ```json
 {
+    "select": "test",
     "output": { "format": "csv" },
 }
 ```
@@ -281,6 +252,7 @@ You can change timestamp representation using `timestamp` field:
 
 ```json
 {
+    "select": "test",
     "output": { "format": "csv", "timestamp": "raw" }
 }
 ```
@@ -302,34 +274,39 @@ test tag=Foo, 1453127844649397000, 999999
 You can use `limit` and `offset` query fields to limit number of returned tuples and to skip some tuples at
 the begining of the query output. This fields works the same as LIMIT and OFFSET clauses in SQL.
 
-#### Sample field.
+#### Map field.
 
-Sample field can be used to transform time-series data. This field should contain a list of dictionaries.
+**Note: this functionality is disabled now!**
+
+Map field can be used to transform time-series data. This field should contain a list of dictionaries.
 Each dictionary can describe single operation. For example:
 
 ```json
 {
-    "sample": [ { "name": "paa" } ],
-    "group-by": { "tag": "valve_num", "time": "1s" }
+    "select": "pressure_kPa",
+    "map": [ { "name": "paa" } ],
+    "group-by": [ "valve_num" ]
 }
 ```
 
-In this sample we're using `paa` transformation on data. This sampler requires `group-by:time` field.
-All samplers can be diveded into two groups: samplers that requires `group-by:time` field and samplers that
-doesn't requires anything. Samplers can be pipelined. In this case each data sample will be passed through all
+In this sample we're using `paa` transformation on data. 
+All transforms can be divided into two groups: samplers that requires regular time-series as an input and samplers that doesn't require anything. 
+Samplers can be pipelined. In this case each data sample will be passed through all
 samplers of the pipeline. Example:
 
 ```json
 {
-    "sample": [ { "name": "paa" },
-                { "name": "sax", "alphabet_size": 8, "window_width": 10 }
-              ],
-    "group-by": { "tag": "valve_num", "time": "1s" }
+    "select": "pressure_kPa",
+    "map": [ { "name": "paa" },
+             { "name": "sax", "alphabet_size": 8, "window_width": 10 }
+           ],
+    "group-by": { "tag": "valve_num" }
 }
 ```
 
 In this case we're using PAA transformation followed by SAX transformation. SAX transformation has two extra
-parameters `alphabet_size` and `window_width`.
+parameters `alphabet_size` and `window_width`. SAX transformation works with regular time-series and PAA transforms
+irregular time-series into regular.
 
 ##### Piecewise Aggregate Approximation of time series.
 
@@ -345,7 +322,8 @@ In this cases query will look like this:
 
 ```json
 {
-    "sample": [ { "name": "min-paa" } ]
+    ...
+    "map": [ { "name": "min-paa" } ],
 }
 ```
 
@@ -356,27 +334,6 @@ resulting value. In `min-paa` and `max-paa` variants data point with min or max 
 If original time-series has a gap, PAA transformed time-series will have a gap too (this is subject to change,
 in future versions this behavior will be configurable).
 
-##### Random sampling.
-
-Only reservoir sampling supported at the moment. It requires only one argument.
-
-```json
-{
-    "sample": [ { "name": "reservoir", "size": 1000 } ]
-}
-```
-
-This query will return 1000 or less random data points. This sampler is sensible to `group-by:time` field.
-If results is grouped by time, `reservoir` will return results on each time interval, for example:
-
-```json
-{
-    "sample": [ { "name": "reservoir", "size": 1000 } ],
-    "group-by": { "time": 10s }
-}
-```
-
-This query will return 1000 values (or less) every 10 seconds.
 
 ##### SAX transformation.
 
@@ -387,19 +344,21 @@ sliding window used by SAX algorithm.
 
 ```json
 {
-    "sample": [ { "name": "sax", "alphabet_size": 4, "window_width": 4 } ],
+    ...
+    "map": [ { "name": "sax", "alphabet_size": 4, "window_width": 4 } ],
 }
 ```
 
-SAX transformation doesn't require `group-by:time` field but if your time-series data is irregullar you 
+SAX transformation doesn't require `group-by:time` field but if your time-series data is irregular you 
 should use it in conjunction PAA transform.
 
 ```json
 {
-    "sample": [ { "name": "paa" },
-                { "name": "sax", "alphabet_size": 4, "window_width": 4 }
-              ],
-    "group-by": { "tag": "valve_num", "time": "1s" }
+    ...
+    "map": [ { "name": "paa" },
+             { "name": "sax", "alphabet_size": 4, "window_width": 4 }
+           ],
+    "group-by": { "tag": "valve_num" }
 }
 ```
 
