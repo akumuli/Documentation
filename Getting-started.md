@@ -18,7 +18,7 @@ Now you can edit configuration file `~/.akumulid`. This configuration file conta
 
 Now we can create database itself! Run this command:
 ```
-> akumuli --create
+> akumulid --create
 OK database created, path: /home/username/.akumuli
 ```
 You can check that database files is actually created by running `~/.akumuli`. This directory shouldn't be empty. (NOTE: you can delete all this files by running the following command: `akumulid --delete`)
