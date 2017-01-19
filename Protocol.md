@@ -64,7 +64,7 @@ Example:
 
 ```
 +cpu.real|cpu.user|cpu.sys host=machine1 region=NW
-+20141210T074343.999999999
++20141210T074343
 *3
 +3.12
 +8.11
@@ -72,6 +72,6 @@ Example:
 ```
 
 This will produce three writes:
-- Series name: cpu.real host=machine1 region=NW, TS: 20141210T074343.999999999, Value: 3.12
-- Series name: cpu.user host=machine1 region=NW, TS: 20141210T074343.999999999, Value: 8.11
-- Series name: cpu.sys host=machine1 region=NW, TS: 20141210T074343.999999999, Value: 12.6
+- Series name: cpu.real host=machine1 region=NW, TS: 20141210T074343, Value: 3.12
+- Series name: cpu.user host=machine1 region=NW, TS: 20141210T074343, Value: 8.11
+- Series name: cpu.sys host=machine1 region=NW, TS: 20141210T074343, Value: 12.6
