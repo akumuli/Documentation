@@ -7,14 +7,14 @@ in Akumuli can be huge or infinite). Depending on the query result can be return
 
 There are five types of queries: metadata query, select, aggregate, group-aggregate, and join.
 
-### Series names
+### Series Names
 
 Series name is a combination of metric name and tags. Metric can be thought as unit of measure of the time-series, e.g. `cpu_user`, `mem_commit_mb`, `voltage`, etc. Tags, on the other hand, can be viewed as a unique identifier of the object that is monitored, e.g. if you're measuring the performance of the machines in the network you can use tag `host=$particular_machine_host` to distinguish between machines. 
 If you're measuring different properties of some object, you will have set of series with the same set of tags and different metrics, e.g. `cpu_user host=192.168.10.22`, `cpu_system host=192.168.10.22`, and `mem_commit_mb host=192.168.10.22`, all correspond to the same host.
 
 Metric names and tag names and value can't contain spaces, ':', '=', and '|' symbols.
 
-### Metadata query
+### Metadata Query
 
 Metadata query can be used to retrieve information about series. Only series names can be retrieved at the
 moment.
@@ -77,7 +77,7 @@ Note that you can filter by metric without using `where` statement:
 
 This query will return names of all series with `mem` metric.
 
-### Select query
+### Select Query
 
 `Select` query can be used to retrieve results by metric name, `select` field is mandatory and can't be omitted.
 
@@ -106,7 +106,7 @@ Select query consist of several components:
 }
 ```
 
-#### Range field
+#### Range Field
 
 Range field is used to set time bounds. 
 
@@ -154,7 +154,7 @@ Note that timestamps are increasing. This is because timestamp in "from" field i
 "to" field. We can reverse output order by swapping "from" and "to" fields. If timestamp in "to" field is 
 less then timestamp in "from" field Akumuli will return results in backward direction. The "from" boundary is inclusive and "to" boundary is exclusive.
 
-#### Where field
+#### Where Field
 
 Query results can be further filtered using "where" field.
 
@@ -173,7 +173,7 @@ Query results can be further filtered using "where" field.
 This query will retrieve only those series that have `cpu` metric and `region` tag which value is set to `europe`
 or `us-east`.
 
-#### Group-by field
+#### Group-by Field
 
 Suppose that you need to store the valve pressure mesurements. Pressure in each valve is measured by
 two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we
@@ -230,7 +230,7 @@ use several tags in group-by field using the following syntax: `"group-by": [ "f
 resulting series names will have both tags `foo` and `bar`).
 
 
-##### Order-by field
+##### Order-by Field
 
 This field can be used to control output ordering. 
 
@@ -243,7 +243,7 @@ This field can be used to control output ordering.
 
 This field takes single string. It can be "series" or "time". If `order-by` is "series" the results will be ordered by series name first and then by timestamp. If `order-by` is "time" then data points will be ordered by timestamp first and then by series name.
 
-##### Output field
+##### Output Field
 
 You can change query results formatting using `output` field. Example:
 
@@ -284,7 +284,7 @@ test tag=Foo, 1453127844649397000, 999999
 `Timestamp` field can take only two values: `iso` or `raw`.
 
 
-##### Limit and offset fields.
+##### Limit and Offset Fields.
 
 You can use `limit` and `offset` query fields to limit the number of returned tuples and to skip some tuples at
 the beginning of the query output. This fields works the same as LIMIT and OFFSET clauses in SQL.
@@ -304,7 +304,7 @@ Aggregate query consist of several components:
 }
 ```
 
-#### Aggregate Field
+##### Aggregate Field
 
 The `aggregate` field is used to tell Akumuli what metric should be aggregated and what aggregation function should be used.
 
@@ -352,7 +352,7 @@ Join field takes string value with the following format:
 }
 ```
 
-Here `cpu`, `mem`, and `iops` is different metric names. Query processor will find series names with the same set of tags in this metrics and join them. E.g. if we have three series - "cpu host=host1", "mem host=host1", and "iops host=host1" - all three series will be joined together producing single series "cpu|mem|iops host=host1". The output will contain records in bulk format:
+Here `cpu`, `mem`, and `iops` is different metric names. Query processor will find series names with the same set of tags in this metrics and join them. E.g. if we have three series - "cpu host=host1", "mem host=host1", and "iops host=host1" - all three series will be joined together producing single series "cpu|mem|iops host=host1". The output will contain records in [bulk format](https://github.com/akumuli/Akumuli/wiki/Protocol#writing-measurements-in-bulk):
 
 ```
 +cpu|mem|iops host=host1\r\n
@@ -365,3 +365,54 @@ Here `cpu`, `mem`, and `iops` is different metric names. Query processor will fi
 
 You can use `range`, `where`, `order-by`, `limit`, `offset`, and `output` fields the same way as in `select` query.
 
+### Group-Aggregate Query
+
+Group-aggregate query consist of these components:
+
+```json
+{
+  "group-aggregate": "...",
+            "range": "...",
+         "order-by": "...",
+         "group-by": "...",
+            "where": "...",
+           "output": "...",
+            "limit": "...",
+           "offset": "..."
+}
+```
+
+In a nutshell, this query divides all data points into equally sized bins based on timestamp. Then it uses aggregation function(s) to produce single value (or several values if several aggregation functions have been used). This query can be used to resample time-series.
+
+##### Group-Aggregate Field
+
+Group-aggregate field has the following format:
+
+```json
+{
+  "group-aggregate": {
+           "metric": "cpu",
+             "step": "1m",
+             "func": [ "min", "max" ]
+  },
+  ...
+}
+```
+
+- `metric` should contain valid metric name;
+- `step` should contain time interval (e.g. 10s, 1min, 2h);
+- `func` should contain the list of aggregation functions (it is possible to apply several aggregation functions at a time);
+
+The output of this query will look like this:
+
+```
++cpu:min|cpu:max host=host1\r\n
++20170101T221015.001\r\n
+*2\r\n
++0.05\r\n
++99.7\r\n
+```
+
+As you can see, the new metric name will be created by concatenating original metric name with function name using ':' as a separator, and if you're using several aggregation functions several metric names will be concatenated using '|' as a separator (as in `join` query and bulk-load format).
+
+You can use `range`, `where`, `group-by`, `order-by`, `limit`, `offset`, and `output` fields the same way as in `select` query.
