@@ -348,7 +348,7 @@ Join field takes string value with the following format:
 
 ```json
 {
-    "join": "cpu|mem|iops",
+    "join": ["cpu", "mem", "iops"],
 }
 ```
 
