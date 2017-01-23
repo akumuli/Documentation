@@ -5,11 +5,14 @@ To retrieve information from Akumuli you should send HTTP POST query. Post data 
 This section describes JSON query format. Data returned using chunked transfer encoding (because query result
 in Akumuli can be huge or infinite). Depending on the query result can be returned in RESP or in CSV format.
 
+There are five types of queries: metadata query, select, aggregate, group-aggregate, and join.
+
 ### Series names
 
-Each series name consist of metric name and set of tags. Unique combination of metric and tags is used to distinguish
-between different time-series. Metric can be thought as unit of measure of the time-series, e.g. `cpu`, `mem`, `voltage`, etc. Tags, on the other hand, can be viewed as unique identifier of the object that is monitored, e.g. if you're measuring performance of the machines in the network you can use tag `host=$particular_machine_host` to distinguish between machines. 
-If you're measuring properties of some object, you will have set of series with the same set of tags and different metrics.
+Series name is a combination of metric name and tags. Metric can be thought as unit of measure of the time-series, e.g. `cpu_user`, `mem_commit_mb`, `voltage`, etc. Tags, on the other hand, can be viewed as a unique identifier of the object that is monitored, e.g. if you're measuring the performance of the machines in the network you can use tag `host=$particular_machine_host` to distinguish between machines. 
+If you're measuring different properties of some object, you will have set of series with the same set of tags and different metrics, e.g. `cpu_user host=192.168.10.22`, `cpu_system host=192.168.10.22`, and `mem_commit_mb host=192.168.10.22`, all correspond to the same host.
+
+Metric names and tag names and value can't contain spaces, ':', '=', and '|' symbols.
 
 ### Metadata query
 
@@ -22,7 +25,7 @@ moment.
 }
 ```
 
-This will return list of all series names. For example:
+This will return the list of all series names. For example:
 
 ```
 +cpu host=Foo
@@ -30,7 +33,7 @@ This will return list of all series names. For example:
 +cpu host=Buz
 ```
 
-By default results returned in RESP format. This can be altered using "output" field.
+By default results returned in RESP format. This can be altered using "output" field (this field can be used with other types of queries).
 
 ```json
 {
@@ -39,7 +42,7 @@ By default results returned in RESP format. This can be altered using "output" f
 }
 ```
 
-This will return list of all series names in CSV format:
+This will return the list of all series names in CSV format:
 
 ```
 cpu host=Foo
@@ -48,7 +51,7 @@ cpu host=Buz
 ```
 
 This list can be filtered by specifying metric and `where` statement.
-Note that "where" can't be used without metric.
+Note that "where" can't be used without a metric.
 
 ```json
 {
@@ -57,7 +60,7 @@ Note that "where" can't be used without metric.
 }
 ```
 
-This will return list of all series that matches search predicate (Buz is filtered out):
+This will return the list of all series that matches search predicate (Buz is filtered out):
 
 ```
 +cpu host=Foo
@@ -76,17 +79,30 @@ This query will return names of all series with `mem` metric.
 
 ### Select query
 
-Time-series query consist of several components:
+`Select` query can be used to retrieve results by metric name, `select` field is mandatory and can't be omitted.
 
 ```json
 {
-    "select": "...",
-     "range": "...",
-     "where": "...",
-  "group-by": "...",
-    "output": "...",
-     "limit": "...",
-    "offset": "..."
+    "select": "cpu",
+    "range": {
+        "from": "20160102T123000.000000",
+        "to":   "20160102T123010.000000"
+    }
+}
+```
+
+Select query consist of several components:
+
+```json
+{
+           "select": "...",
+            "range": "...",
+            "where": "...",
+         "group-by": "...",
+         "order-by": "...",
+           "output": "...",
+            "limit": "...",
+           "offset": "..."
 }
 ```
 
@@ -136,21 +152,7 @@ Query results will look like this:
 
 Note that timestamps are increasing. This is because timestamp in "from" field is greater than timestamp in
 "to" field. We can reverse output order by swapping "from" and "to" fields. If timestamp in "to" field is 
-less then timestamp in "from" field Akumuli will return results in backward direction.
-
-#### Select field
-
-Each query can filter results using `select` field. This field is mandatory and can't be omitted.
-
-```json
-{
-    "select": "cpu",
-    "range": {
-        "from": "20160102T123000.000000",
-        "to":   "20160102T123010.000000"
-    }
-}
-```
+less then timestamp in "from" field Akumuli will return results in backward direction. The "from" boundary is inclusive and "to" boundary is exclusive.
 
 #### Where field
 
@@ -168,12 +170,12 @@ Query results can be further filtered using "where" field.
 }
 ```
 
-This query will retrieve only series with `cpu` metric that have `region` tag which value is set to `europe`
+This query will retrieve only those series that have `cpu` metric and `region` tag which value is set to `europe`
 or `us-east`.
 
 #### Group-by field
 
-Suppose that you're have the time-series of the valve pressure. Pressure in each valve is measured by
+Suppose that you need to store the valve pressure mesurements. Pressure in each valve is measured by
 two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we
 have `pressure_kPa` metric with two tags: `valve_num` and `sensor_num`. If you query this series you will 
 get the following results:
@@ -194,7 +196,7 @@ get the following results:
 ...
 ```
 
-Each combination of sensor and valve produces it's own time-series. If you want to group data only by valve
+Each combination of sensor and valve produces its own time-series. If you want to group data only by valve
 you can use "group-by" field.
 
 ```json
@@ -204,7 +206,7 @@ you can use "group-by" field.
 }
 ```
 
-As result series that shares the same `valve_num` tag value will be joined together. Series that
+As result series that shares the same `valve_num` tag value will be merged together. Series that
 don't have "valve_num" tag will be excluded from search results. Output will look like this:
 
 ```
@@ -223,14 +225,27 @@ don't have "valve_num" tag will be excluded from search results. Output will loo
 ...
 ```
 
-Note that series name is changed now. It contains only those tags that's listed in `group-by` field. You can
-use several tags in group-by field using the following syntax: `{ "tag": [ "foo", "bar" ] }` (in this case
+Note that series name is changed now. It contains only those tags that was listed in `group-by` field. You can
+use several tags in group-by field using the following syntax: `"group-by": [ "foo", "bar" ]` (in this case
 resulting series names will have both tags `foo` and `bar`).
 
 
+##### Order-by field
+
+This field can be used to control output ordering. 
+
+```json
+{
+    "select": "cpu",
+  "order-by": "series"
+}
+```
+
+This field takes single string. It can be "series" or "time". If `order-by` is "series" the results will be ordered by series name first and then by timestamp. If `order-by` is "time" then data points will be ordered by timestamp first and then by series name.
+
 ##### Output field
 
-You can change query results formatting method using `output` field. Example:
+You can change query results formatting using `output` field. Example:
 
 ```json
 {
@@ -271,117 +286,82 @@ test tag=Foo, 1453127844649397000, 999999
 
 ##### Limit and offset fields.
 
-You can use `limit` and `offset` query fields to limit number of returned tuples and to skip some tuples at
-the begining of the query output. This fields works the same as LIMIT and OFFSET clauses in SQL.
+You can use `limit` and `offset` query fields to limit the number of returned tuples and to skip some tuples at
+the beginning of the query output. This fields works the same as LIMIT and OFFSET clauses in SQL.
 
-#### Map field.
+### Aggregate Query
 
-**Note: this functionality is disabled now!**
-
-Map field can be used to transform time-series data. This field should contain a list of dictionaries.
-Each dictionary can describe single operation. For example:
+Aggregate query consist of several components:
 
 ```json
 {
-    "select": "pressure_kPa",
-    "map": [ { "name": "paa" } ],
-    "group-by": [ "valve_num" ]
+        "aggregate": "...",
+            "range": "...",
+            "where": "...",
+           "output": "...",
+            "limit": "...",
+           "offset": "..."
 }
 ```
 
-In this sample we're using `paa` transformation on data. 
-All transforms can be divided into two groups: samplers that requires regular time-series as an input and samplers that doesn't require anything. 
-Samplers can be pipelined. In this case each data sample will be passed through all
-samplers of the pipeline. Example:
+#### Aggregate Field
+
+The `aggregate` field is used to tell Akumuli what metric should be aggregated and what aggregation function should be used.
 
 ```json
 {
-    "select": "pressure_kPa",
-    "map": [ { "name": "paa" },
-             { "name": "sax", "alphabet_size": 8, "window_width": 10 }
-           ],
-    "group-by": { "tag": "valve_num" }
+    "aggregate": { "cpu": "max" }
 }
 ```
 
-In this case we're using PAA transformation followed by SAX transformation. SAX transformation has two extra
-parameters `alphabet_size` and `window_width`. SAX transformation works with regular time-series and PAA transforms
-irregular time-series into regular.
+This query will return max values of all series with `cpu` metric. At the moment you can use only one aggregation function per metric and only one metric name. You can use the following aggregation functions:
 
-##### Piecewise Aggregate Approximation of time series.
+- `count` - total number of data points in the series (or in time range)
+- `max` - largest value in the series (or in time range)
+- `min` - smallest value in the series (or in time range)
+- `mean` - mean value of the series (or in time range)
+- `sum` - sum of all data points in the series (or in time range)
+- `min_timestamp` - time when smallest value was registered
+- `max_timestamp` - time when largest value was registered
 
-PAA is a dimentionality reduction technique. It transforms irregullar time-series into the regullar one. To 
-do this data should be divided into equaly sized bins. After that all data points in each bin are aggregated
-producing single value. PAA transformation can be viewed as aproximation using box functions.
+You can use `where`, `range`, `output`, `limit`, and `offset` fields the same way as in `select` query. If `range` field is used, aggregate function will be calculated with respect to the specified range.
 
-[[images/PAA.png|alt=PAA diagram]]
+### Join Query
 
-Different functions can be used with PAA transform. By default data points in each bin aggregated using `mean`
-function but you can use `min-paa`, `max-paa`, `first-paa`, `last-paa` or `median-paa`. 
-In this cases query will look like this:
+Join query consist of several components:
 
 ```json
 {
-    ...
-    "map": [ { "name": "min-paa" } ],
+             "join": "...",
+            "range": "...",
+         "order-by": "...",
+            "where": "...",
+           "output": "...",
+            "limit": "...",
+           "offset": "..."
 }
 ```
 
-In `first-paa` and `last-paa` variants data point with smallers or largest timestamp will be used as a 
-resulting value. In `min-paa` and `max-paa` variants data point with min or max value will be used. With
-`median-paa` median will be computed using all data point values.
+##### Join Field
 
-If original time-series has a gap, PAA transformed time-series will have a gap too (this is subject to change,
-in future versions this behavior will be configurable).
-
-
-##### SAX transformation.
-
-Symbolic Aggregate approXimation is a method of converting real valued time-series into symbolic time-series.
-It requires two extra parameters: `alphabet_size` and `window_width`. First parameter is an alphabet size used
-to encode time-series. It shluld be in range [2, 20]. Second parameter `window_width` defines width of the
-sliding window used by SAX algorithm. 
+Join field takes string value with the following format:
 
 ```json
 {
-    ...
-    "map": [ { "name": "sax", "alphabet_size": 4, "window_width": 4 } ],
+    "join": "cpu|mem|iops",
 }
 ```
 
-SAX transformation doesn't require `group-by:time` field but if your time-series data is irregular you 
-should use it in conjunction PAA transform.
-
-```json
-{
-    ...
-    "map": [ { "name": "paa" },
-             { "name": "sax", "alphabet_size": 4, "window_width": 4 }
-           ],
-    "group-by": { "tag": "valve_num" }
-}
-```
-
-Output will be a bit unusual:
+Here `cpu`, `mem`, and `iops` is different metric names. Query processor will find series names with the same set of tags in this metrics and join them. E.g. if we have three series - "cpu host=host1", "mem host=host1", and "iops host=host1" - all three series will be joined together producing single series "cpu|mem|iops host=host1". The output will contain records in bulk format:
 
 ```
-+pressure_kPa valve_num=0
-+20160118T171000.000000000
-+aacd
-+pressure_kPa valve_num=1
-+20160118T171000.000000000
-+abaa
-+pressure_kPa valve_num=0
-+20160118T171001.000000000
-+acda
-+pressure_kPa valve_num=1
-+20160118T171001.000000000
-+cdab
-...
++cpu|mem|iops host=host1\r\n
++20161231T235500\r\n
+*3\r\n
++10.5\r\n
++4870\r\n
++148\r\n
 ```
 
-SAX has some sort of dimensionality reduction so some time-stamps may be missing.
+You can use `range`, `where`, `order-by`, `limit`, `offset`, and `output` fields the same way as in `select` query.
 
-##### Frequent items and heavy hitters.
-
-##### Anomaly detection.
