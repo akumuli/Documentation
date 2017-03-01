@@ -25,9 +25,18 @@ You can check that database files is actually created by running `~/.akumuli`. T
 
 ###Configuring akumuli
 
-Let's return to configuration file (`~/.akumulid`). You can read parameter's descriptions in configuration file. Most of this parameters should be leaved as is. The most important one is `window_width`. This parameter controls time interval for which akumuli will store values in memory. Setting it to some large value (tens of seconds or minutes) if high ingestion rate is expected is not a good idea. If high write speed is desirable this value should be small.
+Let's return to configuration file (`~/.akumulid`). You can read parameter's descriptions in configuration file. The most important parameters are:
 
-Another important parameter is a `compression_threshold`. Generally speaking this parameter defines how many values should be compressed and stored together. Larger value means that compressed chunks on disk will be larger. For compression algorithm to be efficient this parameter should be larger than expected dataset cardinality. So for example if you have 10K different, periodically updated metrics, you will get better compression ratio when `compression_threshold` will be equal 100000 or more. Smaller `compression_threshold` means faster random reads.
+* `path` - tells Akumuli where database volumes should be stored (default value is ~/.akumuli)
+* `nvolumes` - number of volumes that should be created (this parameter is only used when you run `akumulid --create` command)
+* `volume_size` - size of the individual volume (this parameter is only used when you run `akumulid --create` command)
+* `HTTP.port` - port used by HTTP server
+* `TCP.port` - port used by TCP server
+* `TCP.pool_size` - number of threads that should be used to process data (should be less then number of CPUs)
+* `UDP.port` - port used by UDP server
+* `UDP.pool_size` - number of threads that should be used to process data (should be less then the number of CPUs)
+* Log4cpp configuration
+
 
 ###Running server
 
