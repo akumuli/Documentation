@@ -324,7 +324,7 @@ This query will return max values of all series with `cpu` metric. At the moment
 - `min_timestamp` - time when smallest value was registered
 - `max_timestamp` - time when largest value was registered
 
-You can use `where`, `range`, `output`, `limit`, and `offset` fields the same way as in `select` query. If `range` field is used, aggregate function will be calculated with respect to the specified range.
+You can use `where`, `group-by`, `range`, `output`, `limit`, and `offset` fields the same way as in `select` query. If `range` field is used, aggregate function will be calculated with respect to the specified range.
 
 ### Join Query
 
