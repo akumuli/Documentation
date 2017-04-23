@@ -1,6 +1,8 @@
 Query language reference
 ------------------------
 
+The query URL is `http://<host>:<http_port>/api/query`, e.g. `http://localhost:8181/api/query`.
+
 To retrieve information from Akumuli you should send HTTP POST query. Post data should contain JSON query.
 This section describes JSON query format. Data returned using chunked transfer encoding (because query result
 in Akumuli can be huge or infinite). Depending on the query result can be returned in RESP or in CSV format.
