@@ -1,11 +1,11 @@
-###Installation
+### Installation
 
 TODO: build from source
 TODO: install using binary distribution packages
 
-##First steps
+## First steps
 
-###Configuration
+### Configuration
 
 You should create configuration file first. This can be done using command:
 ```
@@ -14,7 +14,7 @@ OK configuration file created at: "/home/username/.akumulid"
 ```
 Now you can edit configuration file `~/.akumulid`. This configuration file contains default settings and comments. Two main configuration parameters are `path` and `nvolumes`. First should contain path to directory when database files should be stored. By default akumuli stores files in `~/.akumuli` directory. You can change this to whatever you like (I'm using `path=/tmp` to run tests most often). Second parameter `nvolumes` should contain number of volumes that akumuli can use to store data. Each volume's size is 4Gb so choose this value wisely.
 
-###Database creation
+### Database creation
 
 Now we can create database itself! Run this command:
 ```
@@ -23,7 +23,7 @@ OK database created, path: /home/username/.akumuli
 ```
 You can check that database files is actually created by running `~/.akumuli`. This directory shouldn't be empty. (NOTE: you can delete all this files by running the following command: `akumulid --delete`)
 
-###Configuring akumuli
+### Configuring akumuli
 
 Let's return to configuration file (`~/.akumulid`). You can read parameter's descriptions in configuration file. The most important parameters are:
 
@@ -38,7 +38,7 @@ Let's return to configuration file (`~/.akumulid`). You can read parameter's des
 * Log4cpp configuration
 
 
-###Running server
+### Running server
 
 To run `akumulid` as a server - just run it without parameters:
 ```
