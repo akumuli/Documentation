@@ -1,11 +1,102 @@
-### Installation
+# Installation
 
-TODO: build from source
-TODO: install using binary distribution packages
+You can install Akumuli on Ubuntu 14.04 using this repository: https://packagecloud.io/Lazin/Akumuli.
 
-## First steps
+## Building from source
 
-### Configuration
+### Ubuntu / Debian
+
+#### Prerequisites
+
+##### Automatic
+
+* Run `prerequisites.sh`. It will try to do the best thing.
+
+##### Manual
+
+In case automatic script didn't work:
+
+* Boost:
+
+  `sudo apt-get install libboost-all-dev`
+
+* log4cxx:
+
+  `sudo apt-get install log4cxx`
+
+* jemalloc:
+
+  `sudo apt-get install libjemalloc-dev`
+
+* microhttpd:
+
+  `sudo apt-get install libmicrohttpd-dev`
+
+* APR:
+
+  `sudo apt-get install libapr1-dev libaprutil1-dev libaprutil1-dbd-sqlite3`
+
+* SQLite:
+
+  `sudo apt-get install libsqlite3-dev`
+
+* Cmake:
+
+  `sudo apt-get install cmake`
+
+#### Building
+
+1. `cmake .`
+1. `make -j`
+
+### Centos 7 / RHEL7 / Fedora
+
+##### Automatic
+
+* Run `prerequisites.sh`. It will try to do the best thing.
+
+##### Manual
+
+In case automatic script didn't work:
+
+* Boost:
+
+  `sudo yum install boost boost-devel`
+
+* log4cxx:
+
+  `sudo yum install log4cxx log4cxx-devel`
+
+* jemalloc:
+
+  `sudo yum install jemalloc-devel`
+
+* microhttpd:
+
+  `sudo yum install libmicrohttpd-devel`
+
+* APR:
+
+  `sudo yum install apr-devel apr-util-devel apr-util-sqlite`
+
+* SQLite
+
+  `sudo yum install sqlite sqlite-devel`
+
+* Cmake:
+
+  `sudo yum install cmake`
+
+
+#### Building
+
+1. `cmake .`
+1. `make -j`
+1. `make`
+
+# First steps
+
+## Configuration
 
 You should create configuration file first. This can be done using command:
 ```
@@ -14,7 +105,7 @@ OK configuration file created at: "/home/username/.akumulid"
 ```
 Now you can edit configuration file `~/.akumulid`. This configuration file contains default settings and comments. Two main configuration parameters are `path` and `nvolumes`. First should contain path to directory when database files should be stored. By default akumuli stores files in `~/.akumuli` directory. You can change this to whatever you like (I'm using `path=/tmp` to run tests most often). Second parameter `nvolumes` should contain number of volumes that akumuli can use to store data. Each volume's size is 4Gb so choose this value wisely.
 
-### Database creation
+## Database creation
 
 Now we can create database itself! Run this command:
 ```
@@ -23,7 +114,7 @@ OK database created, path: /home/username/.akumuli
 ```
 You can check that database files is actually created by running `~/.akumuli`. This directory shouldn't be empty. (NOTE: you can delete all this files by running the following command: `akumulid --delete`)
 
-### Configuring akumuli
+## Configuring Akumuli
 
 Let's return to configuration file (`~/.akumulid`). You can read parameter's descriptions in configuration file. The most important parameters are:
 
@@ -38,7 +129,7 @@ Let's return to configuration file (`~/.akumulid`). You can read parameter's des
 * Log4cpp configuration
 
 
-### Running server
+## Running the server
 
 To run `akumulid` as a server - just run it without parameters:
 ```
