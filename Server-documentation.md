@@ -1,1 +1,0 @@
-* [Protocol specification](Protocol)
