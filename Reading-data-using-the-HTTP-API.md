@@ -1,7 +1,7 @@
 Query language reference
 ------------------------
 
-The query URL is `http://<host>:<http_port>/api/query`, e.g. `http://localhost:8181/api/query`.
+The API endpoint is `http://<host>:<http_port>/api/query`, e.g. `http://localhost:8181/api/query`.
 
 To retrieve information from Akumuli you should send HTTP POST query. Post data should contain JSON query.
 This section describes JSON query format. Data returned using chunked transfer encoding (because query result
@@ -418,3 +418,9 @@ The output of this query will look like this:
 As you can see, the new metric name will be created by concatenating original metric name with function name using ':' as a separator, and if you're using several aggregation functions several metric names will be concatenated using '|' as a separator (as in `join` query and bulk-load format).
 
 You can use `range`, `where`, `group-by`, `order-by`, `limit`, `offset`, and `output` fields the same way as in `select` query.
+
+### Error handling
+
+Query parsing errors are reported using the [RESP protocol](https://redis.io/topics/protocol). The only line in the response will be started with '-' followed by the error message.
+
+Some errors can be reported using the HTTP error codes (e.g. when the wrong API endpoint is used). The query parsing errors are reported using the error messages and the query processing errors usually reported using the HTTP error codes.
