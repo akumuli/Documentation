@@ -119,11 +119,11 @@ You can check that database files is actually created by running `~/.akumuli`. T
 Let's return to configuration file (`~/.akumulid`). You can read parameter's descriptions in configuration file. The most important parameters are:
 
 * `path` - tells Akumuli where database volumes should be stored (default value is ~/.akumuli)
-* `nvolumes` - number of volumes that should be created (this parameter is only used when you run `akumulid --create` command)
+* `nvolumes` - number of volumes that should be created (this parameter is only used when you run `akumulid --create` command). If `nvolumes` is set to 0 the storage will be expanded on demand without deleting old data.
 * `volume_size` - size of the individual volume (this parameter is only used when you run `akumulid --create` command)
 * `HTTP.port` - port used by HTTP server
 * `TCP.port` - port used by TCP server
-* `TCP.pool_size` - number of threads that should be used to process data (should be less then number of CPUs)
+* `TCP.pool_size` - number of threads that should be used to process data (should be less then number of CPUs, if you set this value to 0 the system will try to chose optimal size on start)
 * `UDP.port` - port used by UDP server
 * `UDP.pool_size` - number of threads that should be used to process data (should be less then the number of CPUs)
 * Log4cpp configuration
