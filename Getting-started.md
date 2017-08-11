@@ -47,7 +47,7 @@ In case automatic script didn't work:
 #### Building
 
 1. `cmake .`
-1. `make -j`
+1. `make -j4`
 
 ### Centos 7 / RHEL7 / Fedora
 
@@ -91,7 +91,7 @@ In case automatic script didn't work:
 #### Building
 
 1. `cmake .`
-1. `make -j`
+1. `make -j4`
 1. `make`
 
 ### Centos 6 / RHEL6
