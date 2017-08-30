@@ -22,7 +22,7 @@ In case automatic script didn't work:
 
 * log4cxx:
 
-  `sudo apt-get install log4cxx`
+  `sudo apt-get install log4cxx` or `sudo apt-get install liblog4cxx10v5` on Ubuntu 16.04
 
 * jemalloc:
 
