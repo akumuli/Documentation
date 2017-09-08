@@ -43,6 +43,10 @@ Full message can look like this (\r\n is replaced with real newlines):
 
 **Important:** even the last line in the stream must be finished with \r\n. 
 
+### Error messages
+
+Akumuli doesn't send anything back in response to your writes if everything is OK. But if anything goes wrong it will send error message to client. Client can read data from socket (but not obliged) asynchronously to receive error messages. Error messages are RESP-encoded and will start with '-'.
+
 ### Writing measurements in bulk
 
 Akumuli assumes that measurements with the same set of tags came from the same object. These measurements will differ only by metric names. E.g. _"mem.usage host=machine1 region=NW"_ and _"cpu.user host=machine1 region=NW"_ will be considered originating from the same host. That host is described by the set of tags - _"host=machine1 region=NW"_ and metric name can be seen as a column name. Usually, it is preferable to write these metrics together and Akumuli has special message format for this case.
