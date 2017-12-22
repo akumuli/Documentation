@@ -2,6 +2,8 @@
 
 You can install Akumuli on Ubuntu 14.04 using this repository: https://packagecloud.io/Lazin/Akumuli.
 
+Alternatively, you can use this [Docker repository](https://hub.docker.com/r/akumuli/akumuli/).
+
 ## Building from source
 
 ### Ubuntu / Debian
