@@ -104,7 +104,8 @@ Select query consist of several components:
          "order-by": "...",
            "output": "...",
             "limit": "...",
-           "offset": "..."
+           "offset": "...",
+           "filter": "..."
 }
 ```
 
@@ -286,6 +287,22 @@ test tag=Foo, 1453127844649397000, 999999
 `Timestamp` field can take only two values: `iso` or `raw`.
 
 
+##### Filter field
+
+This field can be used to filter the output.
+
+```json
+{
+    "select": "test",
+    "filter": { "gt": 100 },
+    ...
+}
+```
+
+This query will return values greater than 100. The possible predicates are "gt" (greater than), "ge" (greater or equal),
+"lt" (less than), and "le" (less or equal). It is possible to combine two predicates if you want to read values that
+fit some range, for instance `"filter: {"gt": 0, "lt": 10 }` will select all values between 0 and 10, but not 0 and 10.
+
 ##### Limit and Offset Fields.
 
 You can use `limit` and `offset` query fields to limit the number of returned tuples and to skip some tuples at
@@ -367,6 +384,23 @@ Here `cpu`, `mem`, and `iops` is different metric names. Query processor will fi
 
 You can use `range`, `where`, `order-by`, `limit`, `offset`, and `output` fields the same way as in `select` query.
 
+##### Join with filter
+
+You can filter by any column using the `filter` clause, for example:
+
+```json
+{
+    "join": ["cpu", "mem", "iops"],
+    "filter": {
+        "cpu": { "gt": 200 },
+        "mem": { "lt": 100000000 }
+    },
+    ...
+}
+```
+
+This query will work the same way as previous one but return only those value that match the filter.
+
 ### Group-Aggregate Query
 
 Group-aggregate query consist of these components:
@@ -418,6 +452,27 @@ The output of this query will look like this:
 As you can see, the new metric name will be created by concatenating original metric name with function name using ':' as a separator, and if you're using several aggregation functions several metric names will be concatenated using '|' as a separator (as in `join` query and bulk-load format).
 
 You can use `range`, `where`, `group-by`, `order-by`, `limit`, `offset`, and `output` fields the same way as in `select` query.
+
+##### Filter 
+
+Filter field works the same way as in join query but instead of metric names you should use aggregation function names.
+
+```json
+{
+  "group-aggregate": {
+           "metric": "cpu",
+             "step": "1m",
+             "func": [ "min", "max" ]
+  },
+  "filter": {
+    "max": { "gt": 100 }
+  }
+  ...
+}
+```
+
+This query will rows rows which have value greater than 100 in the second column. You can combine several filters the same
+way as in join query. The returned values should match all filters. 
 
 ### Error handling
 
