@@ -2,4 +2,5 @@
 
 * Initial page
 * [API Reference](api-reference.md)
+* Getting Started
 
