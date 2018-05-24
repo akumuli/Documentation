@@ -1,7 +1,3 @@
----
-description: This page contains the list of endpoints provided by running Akumuli instance.
----
-
 # API Reference
 
 {% api-method method="get" host="http://<host>:8181" path="/api/stats" %}

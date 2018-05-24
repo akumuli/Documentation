@@ -1,20 +1,26 @@
-# Installation
+---
+description: Getting started guide.
+---
 
-You can install Akumuli on Ubuntu 14.04 using this repository: https://packagecloud.io/Lazin/Akumuli.
+# Getting Started
+
+## Installation
+
+You can install Akumuli on Ubuntu 14.04 using this repository: [https://packagecloud.io/Lazin/Akumuli](https://packagecloud.io/Lazin/Akumuli).
 
 Alternatively, you can use this [Docker repository](https://hub.docker.com/r/akumuli/akumuli/).
 
-## Building from source
+### Building from source
 
-### Ubuntu / Debian
+#### Ubuntu / Debian
 
-#### Prerequisites
+**Prerequisites**
 
-##### Automatic
+**Automatic**
 
 * Run `prerequisites.sh`. It will try to do the best thing.
 
-##### Manual
+**Manual**
 
 In case automatic script didn't work:
 
@@ -46,18 +52,18 @@ In case automatic script didn't work:
 
   `sudo apt-get install cmake`
 
-#### Building
+**Building**
 
 1. `cmake .`
-1. `make -j4`
+2. `make -j4`
 
-### Centos 7 / RHEL7 / Fedora
+#### Centos 7 / RHEL7 / Fedora
 
-##### Automatic
+**Automatic**
 
 * Run `prerequisites.sh`. It will try to do the best thing.
 
-##### Manual
+**Manual**
 
 In case automatic script didn't work:
 
@@ -89,74 +95,60 @@ In case automatic script didn't work:
 
   `sudo yum install cmake`
 
-
-#### Building
+**Building**
 
 1. `cmake .`
-1. `make -j4`
-1. `make`
+2. `make -j4`
+3. `make`
 
-### Centos 6 / RHEL6
+## First steps
 
-#### Prequisites
-
-* Same as for RHEL7, but we need to manually install log4cxx, as there isn't a package in the repos:
-```
-wget http://www.pirbot.com/mirrors/apache/logging/log4cxx/0.10.0/apache-log4cxx-0.10.0.tar.gz
-tar -xzvf apache-log4cxx-0.10.0.tar.gz 
-cd apache-log4cxx-0.10.0
-```
-* Add `#include <cstring>` to: `src/main/cpp/inputstreamreader.cpp`, `src/main/cpp/socketoutputstream.cpp` and `src/examples/cpp/console.cpp`
-* Add `#include <cstdio>` to: `src/examples/cpp/console.cpp`
-```
-./configure --prefix=/usr --libdir=/usr/lib64
-make -j4
-sudo make install
-```
-* Go on as for RHEL7
-
-# First steps
-
-## Configuration
+### Configuration
 
 You should create configuration file first. This can be done using command:
-```
+
+```text
 > akumulid --init
 OK configuration file created at: "/home/username/.akumulid"
 ```
-Now you can edit configuration file `~/.akumulid`. This configuration file contains default settings and comments. Two main configuration parameters are `path` and `nvolumes`. First should contain path to directory when database files should be stored. By default akumuli stores files in `~/.akumuli` directory. You can change this to whatever you like (I'm using `path=/tmp` to run tests most often). Second parameter `nvolumes` should contain number of volumes that akumuli can use to store data. Each volume's size is 4Gb so choose this value wisely.
 
-## Database creation
+Now you can edit configuration file `~/.akumulid`. This configuration file contains default settings and comments. Two main configuration parameters are `path` and `nvolumes`. First should contain path to directory when database files should be stored. By default akumuli stores files in `~/.akumuli` directory. You can change this to whatever you like \(I'm using `path=/tmp` to run tests most often\). Second parameter `nvolumes` should contain number of volumes that akumuli can use to store data. Each volume's size is 4Gb so choose this value wisely.
+
+### Database creation
 
 Now we can create database itself! Run this command:
-```
+
+```text
 > akumulid --create
 OK database created, path: /home/username/.akumuli
 ```
-You can check that database files is actually created by running `~/.akumuli`. This directory shouldn't be empty. (NOTE: you can delete all this files by running the following command: `akumulid --delete`)
 
-## Configuring Akumuli
+You can check that database files is actually created by running `~/.akumuli`. This directory shouldn't be empty. \(NOTE: you can delete all this files by running the following command: `akumulid --delete`\)
 
-Let's return to configuration file (`~/.akumulid`). You can read parameter's descriptions in configuration file. The most important parameters are:
+### Configuring Akumuli
 
-* `path` - tells Akumuli where database volumes should be stored (default value is ~/.akumuli)
-* `nvolumes` - number of volumes that should be created (this parameter is only used when you run `akumulid --create` command). If `nvolumes` is set to 0 the storage will be expanded on demand without deleting old data.
-* `volume_size` - size of the individual volume (this parameter is only used when you run `akumulid --create` command)
+Let's return to configuration file \(`~/.akumulid`\). You can read parameter's descriptions in configuration file. The most important parameters are:
+
+* `path` - tells Akumuli where database volumes should be stored \(default value is ~/.akumuli\)
+* `nvolumes` - number of volumes that should be created \(this parameter is only used when you run `akumulid --create` command\). If `nvolumes` is set to 0 the storage will be expanded on demand without deleting old data.
+* `volume_size` - size of the individual volume \(this parameter is only used when you run `akumulid --create` command\)
 * `HTTP.port` - port used by HTTP server
 * `TCP.port` - port used by TCP server
-* `TCP.pool_size` - number of threads that should be used to process data (should be less then number of CPUs, if you set this value to 0 the system will try to chose optimal size on start)
+* `TCP.pool_size` - number of threads that should be used to process data \(should be less then number of CPUs, if you set this value to 0 the system will try to chose optimal size on start\)
 * `UDP.port` - port used by UDP server
-* `UDP.pool_size` - number of threads that should be used to process data (should be less then the number of CPUs)
+* `UDP.pool_size` - number of threads that should be used to process data \(should be less then the number of CPUs\)
 * Log4cpp configuration
 
-
-## Running the server
+### Running the server
 
 To run `akumulid` as a server - just run it without parameters:
-```
+
+```text
 > akumulid
 OK UDP  server started, port: 8383
 OK TCP  server started, port: 8282
 OK HTTP server started, port: 8181
 ```
+
 Now you can write data through TCP or UDP and read data using HTTP.
+
