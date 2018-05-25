@@ -1,8 +1,9 @@
 # Table of contents
 
 * Introduction
+* Introduction
 * Initial page
-* [API Reference](api-reference.md)
+* [API Endpoints](api-reference.md)
 * [Getting Started](getting-started.md)
 * [Data Model](data-model.md)
 

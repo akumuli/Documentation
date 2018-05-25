@@ -1,7 +1,3 @@
----
-description: Getting started guide.
----
-
 # Getting Started
 
 ## Installation

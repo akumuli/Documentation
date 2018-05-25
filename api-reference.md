@@ -1,4 +1,8 @@
-# API Reference
+---
+description: List of available API endpoints
+---
+
+# API Endpoints
 
 {% api-method method="get" host="http://<host>:8181" path="/api/stats" %}
 {% api-method-summary %}
