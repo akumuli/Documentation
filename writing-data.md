@@ -149,32 +149,41 @@ Full message can look like this \(\r\n is replaced with real newlines\):
   +22.0
   ```
 
-**Important:** even the last line in the stream must be finished with \r\n.
+**Important:** even the last line in the stream must be terminated with CRLF.
+
+You can concatenate multiple messages together and send them via TCP connection. Akumuli reads the incomming stream of data, parses it and writes individual data points.
 
 ## Error messages
 
-Akumuli doesn't send anything back in response to your writes if everything is OK. But if anything goes wrong it will send error message to client. Client can read data from socket \(but not obliged\) asynchronously to receive error messages. Error messages are RESP-encoded and will start with '-'.
+Akumuli doesn't send anything back in response to your writes if everything is OK. But if anything goes wrong it will send back an error message. Client can read data from socket \(but not obliged\) asynchronously to receive error messages. Error messages are RESP-encoded and will start with '-'.
 
 ## Writing measurements in bulk
 
-Akumuli assumes that measurements with the same set of tags came from the same object. These measurements will differ only by metric names. E.g. _"mem.usage host=machine1 region=NW"_ and _"cpu.user host=machine1 region=NW"_ will be considered originating from the same host. That host is described by the set of tags - _"host=machine1 region=NW"_ and metric name can be seen as a column name. Usually, it is preferable to write these metrics together and Akumuli has special message format for this case.
+Akumuli assumes that measurements with the same set of tags [came from the same object](data-model.md). These measurements will differ only by metric names. E.g. _"mem.usage host=machine1 region=NW"_ and _"cpu.user host=machine1 region=NW"_ will be considered originating from the same host. That host is described by the set of tags - _"host=machine1 region=NW"_ and metric name can be seen as a column name. Usually, it is preferable to write these metrics together and Akumuli has special message format for this case.
 
 To write data to Akumuli in bulk format you should specify a compound series name, timestamp \(integer or string\), and an array of values \(each value can be integer or string\).
 
-Compound series name format: `<metric1>|<metric2>|...|<metricN> <tags>`. Instead of the single metric name, we're writing the list of metric names separated by `|` symbol \(without spaces!\). On the storage side this will be converted to the list of series names: `<metric1> <tags>`, `<metric2> <tags>`, etc.
+### Compound series name
 
-Example:
+Compound series name format contains pipe delimited list of metric names and the set of tags:
 
-* _"+cpu.real\|cpu.user\|cpu.sys host=machine1 region=NW"_
+```text
+<metric1>|<metric2>|...|<metricN> <tags>
+```
 
-Series name should be followed by the timestamp:
+List of metric names inside the compound series name shouldn't have any spaces. On the storage side this will be converted to the list of series names: `<metric1> <tags>`, `<metric2> <tags>`, etc.
 
-* Integer timestamp \(nanoseconds since epoch\):
-  * _":1418224205000000000\r\n"_ 
-* ISO 8601 encoded UTC date-time \(nanosecond precision or lower\):
-  * _"+20141210T074343.999999999\r\n"_ \(fractional part can go down to nanoseconds\)
+```text
++cpu.real|cpu.user|cpu.sys host=machine1 region=NW
+```
 
-The timestamp should be immediately followed by the array of values. RESP array starts with `*` symbol followed by the number of elements in the array. This number should match the number of metrics in the compound series name! This number should be followed by values \(number of values should match the number of metric names and all values should have the same order, e.g. if cpu.real goes first in the compound series name it's numeric value should go first in the array\).
+### Timestamp
+
+Series name should be followed by the timestamp, the same way as [described previously](writing-data.md#timestamp).
+
+### Array of values
+
+The list of values is represented using the [RESP array](writing-data.md#array). RESP array starts with **\*** symbol followed by the number of elements in the array. This number should match the number of metrics in the compound series name! This number should be followed by values \(number of values should match the number of metric names and all values should have the same order, e.g. if cpu.real goes first in the compound series name it's numeric value should go first in the array\).
 
 Example:
 
@@ -195,7 +204,7 @@ This will produce three writes:
 
 ## OpenTSDB telnet-style API
 
-Akumuli have limited support for OpenTSDB telnet-style API. Only `put` command supported at the moment \(v0.7.14\). The data can be inserted in this form: `put <metric-name> <timestamp> <value> <list-of-tags>`. Example:
+Akumuli have limited support for OpenTSDB telnet-style API. Only `put` command supported at the moment. The data can be inserted in this form: `put <metric-name> <timestamp> <value> <list-of-tags>`. Example:
 
 ```text
 put cpu.user 1483228800 10.005344383927394 OS=Ubuntu_14.04 arch=x64 host=host_0 instance-type=m3.large rack=86 region=eu-central-1 team=NJ
@@ -206,7 +215,15 @@ put mem.commit 1483228800 9 OS=Ubuntu_14.04 arch=x64 host=host_0 instance-type=m
 put mem.virt 1483228800 10 OS=Ubuntu_14.04 arch=x64 host=host_0 instance-type=m3.large rack=86 region=eu-central-1 team=NJ
 ```
 
-The timestamp is a regullar Unix timestamp \(number of seconds since epoch\), but passing ISO8601-formatted date time or nanosecond precision timestamp will also work.
+### Timestamp
 
-OpenTSDB endpoint should be enabled in configuration \(it's enabled in default configuration generated by `akumulid --init` command\). Note that OpenTSDB endpoint in Akumuli is a bit slower than native TCP endpoint.
+OpenTSDB uses timestamps with 1-second precision. It's a regullar Unix timestamp \(number of seconds since epoch\). Akumuli can also understand timestamps in this format and all tools that can write data to OpenTSDB will work. But in addition, passing ISO8601-formatted date time or nanosecond precision timestamp will also work.
+
+OpenTSDB endpoint can be disabled in configuration \(it's enabled by default in configuration generated by `akumulid --init` command\). Note that OpenTSDB endpoint in Akumuli is a bit slower than native TCP endpoint due to protocol verbosity.
+
+### Differences with OpenTSDB
+
+When you're using OpenTSDB you should went to great length in your database schema design. OpenTSDB stores all series with the same metric name together. That's why you should be careful not introducing to many series with the same metric name. With Akumuli this is not needed, since it stores each series individualy.
+
+Akumuli implements 'put' command. Other commands, like 'histogram' or 'rollup' are ignored. The 'version' command returns a string that indicates that Akumuli endpoint is used.
 
