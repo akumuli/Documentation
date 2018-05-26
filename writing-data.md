@@ -159,9 +159,28 @@ Akumuli doesn't send anything back in response to your writes if everything is O
 
 ## Writing measurements in bulk
 
-Akumuli assumes that measurements with the same set of tags [came from the same object](data-model.md). These measurements will differ only by metric names. E.g. _"mem.usage host=machine1 region=NW"_ and _"cpu.user host=machine1 region=NW"_ will be considered originating from the same host. That host is described by the set of tags - _"host=machine1 region=NW"_ and metric name can be seen as a column name. Usually, it is preferable to write these metrics together and Akumuli has special message format for this case.
+Bulk transfer can reduce the transfer size. It allows to minimize redundancy in transferred data by grouping together values with the same timestamp and origin. 
 
-To write data to Akumuli in bulk format you should specify a compound series name, timestamp \(integer or string\), and an array of values \(each value can be integer or string\).
+```text
++mem.usage host=machine1 region=NW\r\n
++20180102T000200\r\n
++87.4\r\n
++cpu.user host=machine1 region=NW\r\n
++20180102T000200\r\n
++22.1\r\n
+```
+
+In this example, _"mem.usage host=machine1 region=NW"_ and _"cpu.user host=machine1 region=NW"_  originate from the same host. They share the set of tags and timestamp \(because the collector generated both measurements at the same time, with hundred of other measurements like this\). The only difference between two measurements are the metric name \(cpu.user vs mem.usage\) and value. In situation like this, it's logical to send the values in bulk, without duplicating the tags and timestamp for each value \(especially, when we have dozens of values, instead of two\). Using the bulk format this example will look like this:
+
+```text
++mem.usage|cpu.user host=machine1 region=NW\r\n
++20180102T000200\r\n
+*2\r\n
++87.4\r\n
++22.1\r\n
+```
+
+To write data to Akumuli in bulk format you should specify a compound series name, timestamp \(integer or string\), and [an array](writing-data.md#array) of values \(each value can be integer or string\).
 
 ### Compound series name
 
@@ -201,6 +220,39 @@ This will produce three writes:
 * Series name: cpu.real host=machine1 region=NW, TS: 20141210T074343, Value: 3.12
 * Series name: cpu.user host=machine1 region=NW, TS: 20141210T074343, Value: 8.11
 * Series name: cpu.sys host=machine1 region=NW, TS: 20141210T074343, Value: 12.6
+
+## Dictionary mode
+
+In many situations client knows what series it will be sending in advance. This can help to cut down the redundancy in transferred data by providing the series name dictionary. Consider this example:
+
+```text
++mem.usage host=machine1 region=NW\r\n
++20180102T000200\r\n
++87.4\r\n
++mem.usage host=machine1 region=NW\r\n
++20180102T000201\r\n
++87.5\r\n
++mem.usage host=machine1 region=NW\r\n
++20180102T000202\r\n
++88.1\r\n
+```
+
+Here, the lines that change are the timestamps and values. The series name is always the same. The client needs to send it every time, and Akumuli have to parse it for every datapoint. To minimize this expenses, client can send the pre-computed dictionary for series names. This dictionary maps series names to user-defined integer ids. This ids then can be used instead of series names in protocol \(this also works with bulk protocol\).
+
+### Sending the dictionary
+
+The dictionary can only be sent in the beginning of the TCP session. The dictionary is represented using the [RESP array](writing-data.md#array). Every key-value pair is represented using two consecutive elements of the array. The series name is represented using the [RESP string](writing-data.md#string). Series name should be followed by the unique id. Id should be represented using the [RESP integer](writing-data.md#integer). 
+
+```text
+
+```
+
+You can join any number of such key value pairs into one array, or split it into several arrays. For instance:
+
+```text
+*4\r\n
+
+```
 
 ## OpenTSDB telnet-style API
 
