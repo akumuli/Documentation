@@ -1,6 +1,6 @@
 # Writing data
 
-Akumuli protocol is based on [redis protocol](http://redis.io/topics/protocol) \(aka RESP or REdis Serialization Protocol\). The protocol is designed to be simple to implemnt, human readable, and fast to parse. Apart from RESP, Akumuli supports [OpenTSDB telnet-style API](http://opentsdb.net/docs/build/html/api_telnet/put.html).
+Akumuli protocol is based on [redis protocol](http://redis.io/topics/protocol) \(aka RESP or REdis Serialization Protocol\). The protocol is designed to be simple to implement, human readable, and fast to parse. Apart from RESP, Akumuli supports [OpenTSDB telnet-style API](http://opentsdb.net/docs/build/html/api_telnet/put.html).
 
 ## Serialization
 
@@ -8,19 +8,19 @@ Akumuli borrows RESP serialization format but not the protocol. Serialization fo
 
 * String
 * Integer
-* Error mesage
+* Error message
 * Array
 * Bulk string
 
 ### String
 
-Simple string starts with **+** character followed by characters of the string and terminated by CRLF \(carriage return and new line characters\), or just by new line. The length of the string is limited by 1 killobyte. The string can't contain a new-line or cariage return characters.
+Simple string starts with **+** character followed by characters of the string and terminated by CRLF \(carriage return and new line characters\), or just by new line. The length of the string is limited by 1 kilobyte. The string can't contain a new-line or carriage return characters.
 
 ```text
 +proc.net.bytes\r\n
 ```
 
-The strings are used to represent timestamps, floating-point values, and series names.
+The strings are used to represent time stamps, floating-point values, and series names.
 
 ### Integer
 
@@ -57,36 +57,79 @@ Array is a compound data structure that can be composed from arbitrary number of
 
 ### Bulk string
 
-TBD
+Bulk strings are used to represent arbitrary large \(up to 1MB\) binary objects. 
+
+* The value starts with **$** character, followed by the length of the string, terminated by the CRLF sequence \(or a single new line character\).
+* The actual bulk string data, terminated by the CRLF. The length of the string should match the value after **$** character.
+
+```text
+$11\r\n
+Hello world\r\n
+```
 
 ## Writing measurements by one
 
-To write data to Akumuli you should specify a series name, timestamp \(integer or string\), and value \(integer or string\).
+This is the simpliest possible way to write data to Akumuli instance. You should send each data point individually. Each data poin contains the following:
+
+* Series name
+* Timestamp
+* Value
+
+### Series name
 
 Series name have the following format: `<metric-name> <tags>`, where `<tags>` is a list of key-value pairs separated by space. You should specify both metric name and tags \(at least one key-value pair\), otherwise it's not a valid series name.
 
 Examples:
 
-* _"+cpu\_user host=hostname region=NW\r\n"_ "cpu\_user" is a metric name and "host" and "region" are tags
-* _"+network.loadavg host=postgres\r\n"_ metric name is "network.loadavg" and tag "host" is set to "postgres"
+```text
++cpu_user host=hostname region=NW\r\n
+```
 
-Series name should be followed by the timestamp:
+Here, "cpu\_user" is a metric name and "host" and "region" are tags.
 
-* Integer timestamp \(nanoseconds since epoch\):
-  * _":1418224205000000000\r\n"_ 
-* ISO 8601 encoded UTC date-time \(nanosecond precision or lower\):
-  * _"+20141210T074343.999999999\r\n"_ \(fractional part can go down to nanoseconds\)
+```text
++network.loadavg host=postgres\r\n
+```
+
+Metric name is "network.loadavg" and tag "host" is set to "postgres". You can find more information about series names in the [Data Model](data-model.md) section.
+
+### Timestamp
+
+Timestamp should be in UTC time \(Akumuli can't work with local time\). To encode the timestamp you can use RESP string or integer.
+
+If the **string** is used, Akumuli will try to interpret its value as ISO 8601 encoded UTC date-time \(with nanosecond precision or lower\).
+
+```text
++20141210T074343.999999999\r\n
+```
 
 Note: only basic ISO8601 format is supported. All timestamps are expected to be UTC timestamps. Timezones are not supported.
 
-The timestamp should be immediately followed by the value:
+If the **integer** was used the value will be interpreted as a 64-bit timestamp with nanosecond precision. The beginning of the epoch is Jan-1 1970 \(Unix epoch\).
 
-* Numeric value encoded by a string.
-  * _"+24.3\r\n"_
-* Numeric value encoded by int.
-  * _":24\r\n"_
+```text
+:1418224205000000000\r\n
+```
 
-### Examples
+### Value
+
+Value can be encoded using the RESP string or integer. If the **string** is used, it will be interpreted as a string representation of the floating point value. Scientific format is supported.
+
+```text
++3.14159\r\n
+```
+
+Note that the string representation of the floating point value may loose precision. You may use something like this to print floating point numbers without precision loss:
+
+```text
+printf("%.17g", float64);
+```
+
+If the **integer** is used, it will be interpreted as is. Note that Akumuli uses double precision floating point numbers, defined by IEEE 754 standard. Thus, only 54-bit integers can be represented precisely.
+
+### Composing the message
+
+Each individual message should be started with series name, followed by the timestamp and the value.
 
 Full message can look like this \(\r\n is replaced with real newlines\):
 
