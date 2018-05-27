@@ -77,7 +77,7 @@ This is the simpliest possible way to write data to Akumuli instance. You should
 
 ### Series name
 
-Series name have the following format: `<metric-name> <tags>`, where `<tags>` is a list of key-value pairs separated by space. You should specify both metric name and tags \(at least one key-value pair\), otherwise it's not a valid series name.
+Series name have the following format: `<metric-name> <tags>`, where `<tags>` is a list of key-value pairs separated by space. You should specify both metric name and tags \(at least one key-value pair\), otherwise it's not a valid series name. It should be encoded using the [RESP string](writing-data.md#string).
 
 Examples:
 
@@ -95,7 +95,7 @@ Metric name is "network.loadavg" and tag "host" is set to "postgres". You can fi
 
 ### Timestamp
 
-Timestamp should be in UTC time \(Akumuli can't work with local time\). To encode the timestamp you can use RESP string or integer.
+Timestamp should be in UTC time \(Akumuli can't work with local time\). To encode the timestamp you can use RESP [string ](writing-data.md#string)or [integer](writing-data.md#integer).
 
 If the **string** is used, Akumuli will try to interpret its value as ISO 8601 encoded UTC date-time \(with nanosecond precision or lower\).
 
@@ -113,7 +113,7 @@ If the **integer** was used the value will be interpreted as a 64-bit timestamp 
 
 ### Value
 
-Value can be encoded using the RESP string or integer. If the **string** is used, it will be interpreted as a string representation of the floating point value. Scientific format is supported.
+Value can be encoded using the RESP [string ](writing-data.md#string)or [integer](writing-data.md#integer). If the **string** is used, it will be interpreted as a string representation of the floating point value. Scientific format is supported.
 
 ```text
 +3.14159\r\n
