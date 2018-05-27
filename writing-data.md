@@ -244,15 +244,27 @@ Here, the lines that change are the timestamps and values. The series name is al
 The dictionary can only be sent in the beginning of the TCP session. The dictionary is represented using the [RESP array](writing-data.md#array). Every key-value pair is represented using two consecutive elements of the array. The series name is represented using the [RESP string](writing-data.md#string). Series name should be followed by the unique id. Id should be represented using the [RESP integer](writing-data.md#integer). 
 
 ```text
-
+*4\r\n
++cpu.user host=machine1 region=NW\r\n
+:1\r\n
++mem.usage host=machine1 region=NW\r\n
+:2\r\n
 ```
 
-You can join any number of such key value pairs into one array, or split it into several arrays. For instance:
+This dictionary can later be used in the transmission. To use the series name from the dictionary one should use it's id, in place of series name \(or compound series name\). The id should be encoded using [RESP integer](writing-data.md#integer).
 
 ```text
-*4\r\n
-
+:1\r\n
++20180102T000200\r\n
++11.2\r\n
+:2\r\n
++20180102T000200\r\n
++43.99\r\n
 ```
+
+Here, the first data point corresponds to **cpu.user** series, and the second one to **mem.usage**.
+
+You can send the dictionary using a single array or several consecutive ones. The only requirement is that the ids should be unique for the TCP-session, and that the dictionary should be sent first. The following data-points can use or ignore the dictionary.
 
 ## OpenTSDB telnet-style API
 
