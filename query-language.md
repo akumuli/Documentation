@@ -121,8 +121,9 @@ This field takes single string. It can be "series" or "time". If `order-by` is "
 This field can be used to control format of the output.
 
 | Field | Format | Description |
-| --- | --- |
+| --- | --- | --- |
 | "output" | { "format": "csv", "timestamp": "raw" } | Set output format to "csv" and timestamp format to "raw". |
+| "output" | { "format": "resp", "timestamp": "iso" } | Set output format to "resp" and timestamp format to "iso". |
 
 The field is a dictionary with two possible values. The first one is `output.format` . It can be set to "resp" or "csv". The first value is used by default. The output will be formatted using [RESP serialization](writing-data.md#serialization) format. The same that is used to send data to Akumuli. The second value changes the output format to CSV. This is how the output of the query will look with `output.format` set to "csv":
 
@@ -131,5 +132,31 @@ The field is a dictionary with two possible values. The first one is `output.for
 test tag=Foo, 20160118T173724.646397000, 999996test tag=Foo, 20160118T173724.647397000, 999997test tag=Foo, 20160118T173724.648397000, 999998test tag=Foo, 20160118T173724.649397000, 999999
 ```
 
+The second field is `output.timestamp`.  It controls formatting of the timestamps in the output of the query. If it's set to "raw" Akumuli will format timestamps as 64-bit integers.
 
+```text
+
+test tag=Foo, 1453127844646397000, 999996test tag=Foo, 1453127844647397000, 999997test tag=Foo, 1453127844648397000, 999998test tag=Foo, 1453127844649397000, 999999
+```
+
+If it's set to "iso" timestamps will be formatted according to ISO8601 standard.
+
+### Filter Field
+
+Filter field can be used to filter data-points by value.
+
+| Field | Format | Description |
+| --- | --- | --- |
+| "format" | { "gt": 10, "lt": 100 } | Filter out all values less or equal to 10 and greater or equal to 100. |
+| "format" | { "ge": 0, "le": 1 } | Filter out all negative values and all values greater then one. |
+
+This field should contain a dictionary with the predicates. The possible predicates are "gt" \(greater than\), "ge" \(greater or equal\), "lt" \(less than\), and "le" \(less or equal\). It is possible to combine two predicates if you want to read values that fit some range, for instance `"filter: {"gt": 0, "lt": 10 }` will select all values between 0 and 10, but not 0 and 10. You can use only predicate if needed.
+
+The use of filter field can speed up query execution if the number of returned values is small. In this case the query engine won't read all the data from disk but only those pages that have the data the query needs.
+
+### Limit and Offset Fields
+
+You can use `limit` and `offset` query fields to limit the number of returned tuples and to skip some tuples at the beginning of the query output. This fields works the same as LIMIT and OFFSET clauses in SQL.
+
+Don't use this fields if you need to read all the data in chunks. Akumuli executes queries lazily. To read data in chunks, you can issue a normal query \(without limit and offset\) and read the first chunk \(without disconnecting from the server afterwards\). When you done with the first chunk you can read the next one, and so on. The query will be executed as far as you read data through the TCP connection. When you'll stop reading to process the data the query execution on the server will pause. It will resume when you'll continue reading.
 
