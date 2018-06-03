@@ -105,5 +105,31 @@ Suppose that you need to store the valve pressure measurements. Pressure in each
 +pressure_kPa valve_num=0+20160118T171000.000000000+204.0+pressure_kPa valve_num=0+20160118T171000.000000000+204.1+pressure_kPa valve_num=1+20160118T171000.000000000+208.0+pressure_kPa valve_num=1+20160118T171000.000000000+208.2...
 ```
 
+### Order-by Field
+
+This field can be used to control the order of the data-points in the query output.
+
+| Field | Format | Description |
+| --- | --- | --- |
+| "order-by" | "series" | Sort output by series name |
+| "order-by" | "time" | Sort output by timestamp |
+
+This field takes single string. It can be "series" or "time". If `order-by` is "series" the results will be ordered by series name first and then by timestamp. If `order-by` is "time" then data points will be ordered by timestamp first and then by series name.
+
+### Output Field
+
+This field can be used to control format of the output.
+
+| Field | Format | Description |
+| --- | --- |
+| "output" | { "format": "csv", "timestamp": "raw" } | Set output format to "csv" and timestamp format to "raw". |
+
+The field is a dictionary with two possible values. The first one is `output.format` . It can be set to "resp" or "csv". The first value is used by default. The output will be formatted using [RESP serialization](writing-data.md#serialization) format. The same that is used to send data to Akumuli. The second value changes the output format to CSV. This is how the output of the query will look with `output.format` set to "csv":
+
+```text
+
+test tag=Foo, 20160118T173724.646397000, 999996test tag=Foo, 20160118T173724.647397000, 999997test tag=Foo, 20160118T173724.648397000, 999998test tag=Foo, 20160118T173724.649397000, 999999
+```
+
 
 
