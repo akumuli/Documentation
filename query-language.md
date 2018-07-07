@@ -14,21 +14,21 @@ All data is split between the different metrics. You can think about the metric 
 cpu.user host=pg-balancer OS=Trusty arch=x86_amd64 region=NE
 ```
 
-Here, **cpu.user** is a metric name, and **host=pg-balancer** is a tag-value pair. Akumuli uses [Boolean model \(BIR\)](https://en.wikipedia.org/wiki/Standard_Boolean_model) for series name searching. For every query you need to specify a metric name and optionally, a set of tag-value pairs. Series that have this metric name and contains this tag-value pairs will be added to result set.
+Here, **cpu.user** is a metric name, and **host=pg-balancer** is a tag-value pair. Akumuli uses [Boolean model \(BIR\)](https://en.wikipedia.org/wiki/Standard_Boolean_model) for series name searching. For every query you need to specify a metric name and optionally, a set of tag-value pairs \(using the [where](query-language.md#where-field) field\). Series that have this metric name and contains this tag-value pairs will be added to result set. If the query doesn't have a where field, it will return all time-series with the same metric name.
 
 Every series name is linked to the list of data points \(the actual time-series data\). Every data-point contains a timestamp \(64-bit, nanosecond precision\) and a value \(double precision floating point\). You need to specify a search range for that data inside the query.
 
 ## Query Object
 
-To retrieve the data you should create a query object that describes what data you need and what shape it should have. 
+To retrieve the data you should create a query object that describes what data you need and what shape it should have. The query should be JSON-encoded and sent to ['query' endpoint](api-endpoints.md#read-query).
 
 ## Query Types
 
 Query object can be of one of the following types:
 
-* Select query
-* Aggregate query
-* Group-aggregate query
+* [Select query](query-language.md#select-query)
+* [Aggregate query](query-language.md#aggregate-query)
+* [Group-aggregate query](query-language.md#group-aggregate-query)
 * Join query
 
 ### Select Query
@@ -42,11 +42,38 @@ Select query can return more than one series but they should have the same metri
 | [select](query-language.md#select-field) | Yes | Metric name |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
-| group-by | No | Series transformation |
-| order-by | No | Order of the data-points in the result set |
-| filter | No | Value based filtering |
-| limit | No | Limit on output size |
-| offset | No | Offset of the query output |
+| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| [order-by](query-language.md#order-by-field) | No | Order of the data-points in the result set |
+| [filter](query-language.md#filter-field) | No | Value based filtering |
+| [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
+| [offset](query-language.md#limit-and-offset-fields) | No | Offset of the query output |
+
+### Aggregate Query
+
+This query can be used to calculate aggregates over time-series. The query returns only one result for every time-series.
+
+| Field | Required | Commentary |
+| --- | --- | --- | --- | --- | --- |
+| [aggregate](query-language.md#aggregate-field) | Yes | Metric name and aggregation function |
+| [range](query-language.md#range-field) | Yes | Time range |
+| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| [where](query-language.md#where-field) | No | Tag filter |
+| [output](query-language.md#output-field) | No | Set output format |
+
+### Group-aggregate Query
+
+This query is used to downsample time-series data. It divides all data-points into a series of equally sized bins and computes a value for every bin. The same aggregation functions that can be used with [aggregate query](query-language.md#aggregate-query) can be used with group-aggregate. The difference between the aggregate and group-aggregate queries is that the aggregate produces only one value for every series but the group-aggregate can produce a time-series with fixed step. Also, more than one aggregation function can be used with group-aggregate query.
+
+| Field | Required | Commentary |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| group-aggregate | Yes | Query specific parameters |
+| [range](query-language.md#range-field) | Yes | Time range |
+| [where](query-language.md#where-field) | No | Tag filter |
+| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| [order-by](query-language.md#order-by-field) | No | Order of the data-points in the result set |
+| [filter](query-language.md#filter-field) | No | Value filter |
+| [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
+| [offset](query-language.md#limit-and-offset-fields) | No | Offset of the query output |
 
 ## Query Fields
 
@@ -71,6 +98,74 @@ Select field is used to tell Akumuli what metric should be fetched.
 | "select" | "metric.name" | Metric name |
 
 This field defines the query type. If this field is used the query will be a simple [select query](query-language.md#select-query). You can provide only one "select" field. This field can have only one metric name. The query will fetch all series with this metric name. This series can be further filtered by using "where" field.
+
+### Aggregate Field
+
+Aggregate field is required to create an [aggregate query](query-language.md#aggregate-query). The type of the field is a dictionary that has the following format:
+
+```text
+"aggregate": { <metric-name>: <aggregation-function> }
+```
+
+Only one metric-name and aggregation-function pair can be provided. The available aggregation functions are these:
+
+| Name | Description |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| count | Number of elements in series |
+| max | Largest element in the series |
+| min | Smallest element in the series |
+| mean | Average value |
+| sum | Sum of all values in the series |
+| min\_timestamp | The timestamp of the smallest element |
+| max\_timestamp | The timestamp of the largest element |
+
+The aggregate query object computes aggregate only for values inside the specified [time-range](query-language.md#range-field). If there is no values inside the range, the query will return error.
+
+### Group-aggregate Field
+
+Group-aggregate field is required to make a [group-aggregate query](query-language.md#group-aggregate-query). The field is a dictionary with the following format:
+
+```text
+{
+    "group-aggregate": {
+        "metric": <metric-name>,
+        "step": <time-duration>,
+        "func": <function-name>
+}
+```
+
+| Field | Format | Description |
+| --- | --- | --- | --- | --- |
+| group-aggregate.metric | String | Metric name \(same as in [select](query-language.md#select-field)\) |
+| group-aggregate.step | String | Aggregation step \(10s, 1h, 5m\) |
+| group-aggregate.func | String | Aggregation function |
+| group-aggregate.func | List | List of aggregation functions |
+
+#### Using one function
+
+If only one aggregation function is used in `group-aggregate` field the output will have the following format:
+
+```text
++cpu:min host=host1\r\n
++20170101T221015\r\n
++0.05\r\n
+```
+
+The series name of the original series changes. The tags stays the same but the metric name gets the **:&lt;function-name&gt;** suffix. In the example above, original series name was 'cpu host=host1' but the resulting series name is 'cpu:min host=host1'. 
+
+#### Using list of functions
+
+If more than one aggregation function was used in group-aggregate field the output will have the followind format:
+
+```text
++cpu:min|cpu:max host=host1\r\n
++20170101T221015\r\n
+*2\r\n
++0.05\r\n
++99.7\r\n
+```
+
+Metric name is changed as described above plus, the [compound series name format](writing-data.md#compound-series-name) is used. The query willl return a series for every aggregation function in the list. This series will have the same timestamps but different values \(since different functions were used to produce them\). Then, these series will be joined together and the [bulk format](writing-data.md#writing-measurements-in-bulk) is used to return them.
 
 ### Where Field
 

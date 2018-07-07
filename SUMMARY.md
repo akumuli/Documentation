@@ -1,6 +1,6 @@
 # Table of contents
 
-* Introduction
+* [Introduction](README.md)
 * [Introduction](introduction-1.md)
 * [API Endpoints](api-endpoints.md)
 * [Getting Started](getting-started.md)
