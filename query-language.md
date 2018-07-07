@@ -22,6 +22,12 @@ Every series name is linked to the list of data points \(the actual time-series 
 
 To retrieve the data you should create a query object that describes what data you need and what shape it should have. The query should be JSON-encoded and sent to ['query' endpoint](api-endpoints.md#read-query).
 
+## Error Handling
+
+Query parsing errors are reported using the [RESP protocol](writing-data.md#error-messages). The only line in the response will be started with '-' followed by the error message.
+
+Some errors can be reported using the HTTP error codes \(e.g. when the wrong API endpoint is used\). The query parsing errors are reported using the error messages and the query processing errors usually reported using the HTTP error codes.
+
 ## Query Types
 
 Query object can be of one of the following types:
