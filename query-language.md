@@ -87,7 +87,7 @@ Join query can be used to align several metrics together. The query will group t
 
 | Field | Required | Commentary |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| join | Yes | List of metrics to join |
+| [join](query-language.md#join-field) | Yes | List of metrics to join |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
 | [group-by](query-language.md#group-by-field) | No | Series transformation |
