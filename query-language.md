@@ -29,7 +29,7 @@ Query object can be of one of the following types:
 * [Select query](query-language.md#select-query)
 * [Aggregate query](query-language.md#aggregate-query)
 * [Group-aggregate query](query-language.md#group-aggregate-query)
-* Join query
+* [Join query](query-language.md#join-query)
 
 ### Select Query
 
@@ -66,11 +66,26 @@ This query is used to downsample time-series data. It divides all data-points in
 
 | Field | Required | Commentary |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| group-aggregate | Yes | Query specific parameters |
+| [group-aggregate](query-language.md#group-aggregate-field) | Yes | Query specific parameters |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
 | [group-by](query-language.md#group-by-field) | No | Series transformation |
 | [order-by](query-language.md#order-by-field) | No | Order of the data-points in the result set |
+| [filter](query-language.md#filter-field) | No | Value filter |
+| [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
+| [offset](query-language.md#limit-and-offset-fields) | No | Offset of the query output |
+
+### Join Query
+
+Join query can be used to align several metrics together. The query will group together series that has the same tags but different metric names. The resulting output will be in [bulk load format](writing-data.md#writing-measurements-in-bulk). Series names of the individual series will be joined together using the [compound series name format](writing-data.md#compound-series-name).
+
+| Field | Required | Commentary |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| join | Yes | List of metrics to join |
+| [range](query-language.md#range-field) | Yes | Time range |
+| [where](query-language.md#where-field) | No | Tag filter |
+| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| [order-by](query-language.md#order-by-field) | No | Ordering of the data-points in the result set |
 | [filter](query-language.md#filter-field) | No | Value filter |
 | [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
 | [offset](query-language.md#limit-and-offset-fields) | No | Offset of the query output |
@@ -167,6 +182,29 @@ If more than one aggregation function was used in group-aggregate field the outp
 
 Metric name is changed as described above plus, the [compound series name format](writing-data.md#compound-series-name) is used. The query willl return a series for every aggregation function in the list. This series will have the same timestamps but different values \(since different functions were used to produce them\). Then, these series will be joined together and the [bulk format](writing-data.md#writing-measurements-in-bulk) is used to return them.
 
+### Join Field
+
+Join field is used to make a join query. This field's type is list. The list should contain valid metric names. Example:
+
+```text
+{
+    "join": ["cpu", "mem", "iops"]
+}
+```
+
+ Here `cpu`, `mem`, and `iops` is different metric names. Query processor will find series names with the same set of tags in this metrics and join them. E.g. if we have three series - "cpu host=host1", "mem host=host1", and "iops host=host1" - all three series will be joined together producing single series "cpu\|mem\|iops host=host1".  The output will contain records in [bulk format](writing-data.md#writing-measurements-in-bulk).
+
+```text
++cpu|mem|iops host=host1\r\n
++20161231T235500\r\n
+*3\r\n
++10.5\r\n
++4870\r\n
++148\r\n
+```
+
+
+
 ### Where Field
 
 Where field is used to limit number of series returned by the query.
@@ -186,18 +224,40 @@ Group-by field is used to merge several series together. If `group-by` field was
 | --- | --- |
 | "group-by" | \[ "tag1", "tag2", ..., "tagN" \] | The list of tags that resulting series name should have. |
 
-Suppose that you need to store the valve pressure measurements. Pressure in each valve is measured by two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we have `pressure_kPa` metric with two tags: `valve_num` and `sensor_num`. If you query this series you will get the following results:
+Suppose that you need to store the valve pressure measurements. Pressure in each valve is measured by two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we have `pressure_kPa` metric with two tags: `valve_num` and `sensor_num`. If you query this series you will get the following results \(_\r\n_ omitted\):
 
 ```text
-
-+pressure_kPa valve_num=0 sensor_num=0+20160118T171000.000000000+204.0+pressure_kPa valve_num=0 sensor_num=1+20160118T171000.000000000+204.1+pressure_kPa valve_num=1 sensor_num=0+20160118T171000.000000000+208.0+pressure_kPa valve_num=1 sensor_num=1+20160118T171000.000000000+208.2...
++pressure_kPa valve_num=0 sensor_num=0
++20160118T171000.000000000
++204.0
++pressure_kPa valve_num=0 sensor_num=1
++20160118T171000.000000000
++204.1
++pressure_kPa valve_num=1 sensor_num=0
++20160118T171000.000000000
++208.0
++pressure_kPa valve_num=1 sensor_num=1
++20160118T171000.000000000
++208.2
+...
 ```
 
  Each combination of sensor and valve produces its own time-series. If you want to group data only by valve you can use "group-by" field. If you add a `"group-by": [ "valve_num" ]` field to the query the result will look like this:
 
 ```text
-
-+pressure_kPa valve_num=0+20160118T171000.000000000+204.0+pressure_kPa valve_num=0+20160118T171000.000000000+204.1+pressure_kPa valve_num=1+20160118T171000.000000000+208.0+pressure_kPa valve_num=1+20160118T171000.000000000+208.2...
++pressure_kPa valve_num=0
++20160118T171000.000000000
++204.0
++pressure_kPa valve_num=0
++20160118T171000.000000000
++204.1
++pressure_kPa valve_num=1
++20160118T171000.000000000
++208.0
++pressure_kPa valve_num=1
++20160118T171000.000000000
++208.2
+...
 ```
 
 ### Order-by Field
@@ -223,15 +283,19 @@ This field can be used to control format of the output.
 The field is a dictionary with two possible values. The first one is `output.format` . It can be set to "resp" or "csv". The first value is used by default. The output will be formatted using [RESP serialization](writing-data.md#serialization) format. The same that is used to send data to Akumuli. The second value changes the output format to CSV. This is how the output of the query will look with `output.format` set to "csv":
 
 ```text
-
-test tag=Foo, 20160118T173724.646397000, 999996test tag=Foo, 20160118T173724.647397000, 999997test tag=Foo, 20160118T173724.648397000, 999998test tag=Foo, 20160118T173724.649397000, 999999
+test tag=Foo, 20160118T173724.646397000, 999996
+test tag=Foo, 20160118T173724.647397000, 999997
+test tag=Foo, 20160118T173724.648397000, 999998
+test tag=Foo, 20160118T173724.649397000, 999999
 ```
 
 The second field is `output.timestamp`.  It controls formatting of the timestamps in the output of the query. If it's set to "raw" Akumuli will format timestamps as 64-bit integers.
 
 ```text
-
-test tag=Foo, 1453127844646397000, 999996test tag=Foo, 1453127844647397000, 999997test tag=Foo, 1453127844648397000, 999998test tag=Foo, 1453127844649397000, 999999
+test tag=Foo, 1453127844646397000, 999996
+test tag=Foo, 1453127844647397000, 999997
+test tag=Foo, 1453127844648397000, 999998
+test tag=Foo, 1453127844649397000, 999999
 ```
 
 If it's set to "iso" timestamps will be formatted according to ISO8601 standard.
@@ -248,6 +312,23 @@ Filter field can be used to filter data-points by value.
 This field should contain a dictionary with the predicates. The possible predicates are "gt" \(greater than\), "ge" \(greater or equal\), "lt" \(less than\), and "le" \(less or equal\). It is possible to combine two predicates if you want to read values that fit some range, for instance `"filter: {"gt": 0, "lt": 10 }` will select all values between 0 and 10, but not 0 and 10. You can use only predicate if needed.
 
 The use of filter field can speed up query execution if the number of returned values is small. In this case the query engine won't read all the data from disk but only those pages that have the data the query needs.
+
+#### Multi-dimensional filter
+
+Filter field can be used with the join query. If this is the case, you have to specify the metric to which the filter should be applied.
+
+```text
+{
+    "join": ["cpu", "mem", "iops"],
+    "filter": {
+        "cpu": { "gt": 200 },
+        "mem": { "lt": 100000000 }
+    },
+    ...
+}
+```
+
+In this case filter &gt;200 will be applied to "cpu" metric and the filter &lt;100 will be applied to "mem" metric.
 
 ### Limit and Offset Fields
 
