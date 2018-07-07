@@ -328,7 +328,7 @@ Filter field can be used with the join query. If this is the case, you have to s
     "join": ["cpu", "mem", "iops"],
     "filter": {
         "cpu": { "gt": 200 },
-        "mem": { "lt": 100000000 }
+        "mem": { "lt": 100 }
     },
     ...
 }
