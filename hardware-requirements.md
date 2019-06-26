@@ -2,7 +2,7 @@
 
 ## Memory
 
-Every individual time-series Akumuli is stored on disk using a memory resident component. This memory resident component is composed using IOVec blocks. Each IOVec structure contains up to 4KB of memory. The number of IOVec blocks needed to handle individual time-series depends on its disk-resident size. Akumuli stores time-series in LSM-tree like structure every level of which allocates a single IOVec block. The number of extents depend on disk space used by time seires. This memory/disk space dependency looks like this:
+Every individual time-series is stored on disk using a memory resident component. This memory resident component is composed using IOVec blocks. Each IOVec structure contains up to 4KB of memory. The number of IOVec blocks needed to handle individual time-series depends on its disk-resident size. Akumuli stores time-series in LSM-tree like structure every level of which allocates a single IOVec block. The number of extents depend on disk space used by time seires. This memory/disk space dependency looks like this:
 
 | Memory | Disk |
 | :--- | :--- |
@@ -31,5 +31,5 @@ Akumuli is designed for SSD and NVMe drives. It writes data sequentially and fre
 
 ## CPU
 
-Ingestion depend on number of available CPU's. In best case every CPU available for ingestion gives around 1M write/sec \(if dictionary mode is used\). With OpenTSDB format the per-CPU write effeciency will get lower. CPU's can be provisioned for ingestion in configuration. 
+Ingestion depend on number of available CPU's. In best case every CPU available for ingestion gives around 1M write/sec \(if dictionary mode is used and on Intel CPU's\). With OpenTSDB format the per-CPU write effeciency will get lower. CPU's can be provisioned for ingestion in configuration. 
 
