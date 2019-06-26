@@ -7,4 +7,5 @@
 * [Data Model](data-model.md)
 * [Writing data](writing-data.md)
 * [Query Language](query-language.md)
+* [Hardware Requirements](hardware-requirements.md)
 

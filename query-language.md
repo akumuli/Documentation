@@ -44,7 +44,7 @@ This is a simplest possible query type. It can return raw time-series data witho
 Select query can return more than one series but they should have the same metric name.
 
 | Field | Required | Commentary |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| :--- | :--- | :--- |
 | [select](query-language.md#select-field) | Yes | Metric name |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
@@ -59,7 +59,7 @@ Select query can return more than one series but they should have the same metri
 This query can be used to calculate aggregates over time-series. The query returns only one result for every time-series.
 
 | Field | Required | Commentary |
-| --- | --- | --- | --- | --- | --- |
+| :--- | :--- | :--- |
 | [aggregate](query-language.md#aggregate-field) | Yes | Metric name and aggregation function |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [group-by](query-language.md#group-by-field) | No | Series transformation |
@@ -71,7 +71,7 @@ This query can be used to calculate aggregates over time-series. The query retur
 This query is used to downsample time-series data. It divides all data-points into a series of equally sized bins and computes a value for every bin. The same aggregation functions that can be used with [aggregate query](query-language.md#aggregate-query) can be used with group-aggregate. The difference between the aggregate and group-aggregate queries is that the aggregate produces only one value for every series but the group-aggregate can produce a time-series with fixed step. Also, more than one aggregation function can be used with group-aggregate query.
 
 | Field | Required | Commentary |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| :--- | :--- | :--- |
 | [group-aggregate](query-language.md#group-aggregate-field) | Yes | Query specific parameters |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
@@ -86,7 +86,7 @@ This query is used to downsample time-series data. It divides all data-points in
 Join query can be used to align several metrics together. The query will group together series that has the same tags but different metric names. The resulting output will be in [bulk load format](writing-data.md#writing-measurements-in-bulk). Series names of the individual series will be joined together using the [compound series name format](writing-data.md#compound-series-name).
 
 | Field | Required | Commentary |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| :--- | :--- | :--- |
 | [join](query-language.md#join-field) | Yes | List of metrics to join |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
@@ -105,7 +105,7 @@ The query object is JSON encoded. It can have a pre-defined set of fields. Some 
 Range field denotes the time interval that query should fetch.
 
 | Field | Format | Description |
-| --- | --- |
+| :--- | :--- | :--- |
 | "range" | { "from": "20180530T123000", "to": "20180530T130000" } | Field should contain a dictionary with two keys, "from" and "to". Both values are timestamps. |
 
 Both timestamps should be encoded using the basic ISO8601 format. The same format is used for data ingestion with RESP protocol. Both "range.from" and "range.to" fields are mandatory for data queries. If "range.from" is less than "range.to" the time-series data points will be returned in accending order \(from old to new\). If "range.from" is greater than "range.to" then the time-series data points will be returned in descending order \(from recent to old\).
@@ -115,7 +115,7 @@ Both timestamps should be encoded using the basic ISO8601 format. The same forma
 Select field is used to tell Akumuli what metric should be fetched.
 
 | Field | Format | Description |
-| --- | --- |
+| :--- | :--- | :--- |
 | "select" | "metric.name" | Metric name |
 
 This field defines the query type. If this field is used the query will be a simple [select query](query-language.md#select-query). You can provide only one "select" field. This field can have only one metric name. The query will fetch all series with this metric name. This series can be further filtered by using "where" field.
@@ -131,7 +131,7 @@ Aggregate field is required to create an [aggregate query](query-language.md#agg
 Only one metric-name and aggregation-function pair can be provided. The available aggregation functions are these:
 
 | Name | Description |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| :--- | :--- |
 | count | Number of elements in series |
 | max | Largest element in the series |
 | min | Smallest element in the series |
@@ -156,7 +156,7 @@ Group-aggregate field is required to make a [group-aggregate query](query-langua
 ```
 
 | Field | Format | Description |
-| --- | --- | --- | --- | --- |
+| :--- | :--- | :--- |
 | group-aggregate.metric | String | Metric name \(same as in [select](query-language.md#select-field)\) |
 | group-aggregate.step | String | Aggregation step \(10s, 1h, 5m\) |
 | group-aggregate.func | String | Aggregation function |
@@ -216,7 +216,7 @@ Join field is used to make a join query. This field's type is list. The list sho
 Where field is used to limit number of series returned by the query.
 
 | Field | Format | Description |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | "where" | { "tag-name": "tag-value" } | Include only series names which has tag "tag-name" set to "tag-value". |
 | "where" | { "tag-name": \[ "value1", "value2" \] } | Include only series names which has tag "tag-name" set to one of the values "value1" or "value2". |
 
@@ -227,7 +227,7 @@ You can specify many tags in one where field. This data in conjunction with metr
 Group-by field is used to merge several series together. If `group-by` field was used to specify a tag name, all series which names has this tag with the same value will collapse into one. All data points from that series will be joined together. The resulting time-seires will contain all data-points from the original series. The series name will contain only those tags that was specified in `group-by` field.
 
 | Field | Format | Description |
-| --- | --- |
+| :--- | :--- | :--- |
 | "group-by" | \[ "tag1", "tag2", ..., "tagN" \] | The list of tags that resulting series name should have. |
 
 Suppose that you need to store the valve pressure measurements. Pressure in each valve is measured by two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we have `pressure_kPa` metric with two tags: `valve_num` and `sensor_num`. If you query this series you will get the following results \(_\r\n_ omitted\):
@@ -271,7 +271,7 @@ Suppose that you need to store the valve pressure measurements. Pressure in each
 This field can be used to control the order of the data-points in the query output.
 
 | Field | Format | Description |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | "order-by" | "series" | Sort output by series name |
 | "order-by" | "time" | Sort output by timestamp |
 
@@ -282,7 +282,7 @@ This field takes single string. It can be "series" or "time". If `order-by` is "
 This field can be used to control format of the output.
 
 | Field | Format | Description |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | "output" | { "format": "csv", "timestamp": "raw" } | Set output format to "csv" and timestamp format to "raw". |
 | "output" | { "format": "resp", "timestamp": "iso" } | Set output format to "resp" and timestamp format to "iso". |
 
@@ -311,7 +311,7 @@ If it's set to "iso" timestamps will be formatted according to ISO8601 standard.
 Filter field can be used to filter data-points by value.
 
 | Field | Format | Description |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | "format" | { "gt": 10, "lt": 100 } | Filter out all values less or equal to 10 and greater or equal to 100. |
 | "format" | { "ge": 0, "le": 1 } | Filter out all negative values and all values greater then one. |
 
