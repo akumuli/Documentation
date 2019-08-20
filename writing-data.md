@@ -88,10 +88,10 @@ Examples:
 Here, "cpu\_user" is a metric name and "host" and "region" are tags.
 
 ```text
-+network.loadavg host=postgres\r\n
++!network.tcp.packet_loss host=postgres\r\n
 ```
 
-Metric name is "network.loadavg" and tag "host" is set to "postgres". You can find more information about series names in the [Data Model](data-model.md) section.
+Event name is "!network.tcp.packet\_loss" and tag "host" is set to "postgres". You can find more information about series names in the [Data Model](data-model.md) section.
 
 ### Timestamp
 
@@ -111,7 +111,9 @@ If the **integer** was used the value will be interpreted as a 64-bit timestamp 
 :1418224205000000000\r\n
 ```
 
-### Value
+Note: event timestamps are stored with microsecon precision.
+
+### Metric Value
 
 Value can be encoded using the RESP [string ](writing-data.md#string)or [integer](writing-data.md#integer). If the **string** is used, it will be interpreted as a string representation of the floating point value. Scientific format is supported.
 
@@ -127,13 +129,23 @@ printf("%.17g", float64);
 
 If the **integer** is used, it will be interpreted as is. Note that Akumuli uses double precision floating point numbers, defined by IEEE 754 standard. Thus, only 54-bit integers can be represented precisely.
 
+### Event value
+
+Event value can be encoded using RESP [string](writing-data.md#string). 
+
+```text
++1m ipv4 listen drops
+```
+
+Note that the value will be interpreted as an event value only if the message contains event name that starts with '!' symbol.
+
 ### Composing the message
 
 Each individual message should be started with series name, followed by the timestamp and the value.
 
 Full message can look like this \(\r\n is replaced with real newlines\):
 
-* String timestamp, integer value and string id with two keys:
+* Metric with string timestamp, integer value and string id with two keys:
 
   ```text
   +balancers.memusage host=machine1 region=NW
@@ -141,12 +153,20 @@ Full message can look like this \(\r\n is replaced with real newlines\):
   :31
   ```
 
-* Integer timestamp, string value and string id with one key:
+* Metric with integer timestamp, string value and string id with one key:
 
   ```text
   +balancers.cpuload host=machine1 region=NW
   :1418224205000000000
   +22.0
+  ```
+
+* Event with string timestamp, string value and string id with two keys:
+
+  ```text
+  +!net.tcp host=machine1 region=NW
+  +20141210T074343.999999999
+  +1m ipv4 listen drops
   ```
 
 **Important:** even the last line in the stream must be terminated with CRLF.
@@ -192,17 +212,19 @@ To write data to Akumuli in bulk format you should specify a compound series nam
 
 ### Compound series name
 
-Compound series name format contains pipe delimited list of metric names and the set of tags:
+Compound series name format contains pipe delimited list of metric and event names followed by the set of tags:
 
 ```text
-<metric1>|<metric2>|...|<metricN> <tags>
+<name1>|<name2>|...|<name3> <tags>
 ```
 
-List of metric names inside the compound series name shouldn't have any spaces. On the storage side this will be converted to the list of series names: `<metric1> <tags>`, `<metric2> <tags>`, etc.
+List of metric/event names inside the compound series name shouldn't have any spaces. On the storage side this will be converted to the list of series names: `<name1> <tags>`, `<name2> <tags>`, etc.
 
 ```text
-+cpu.real|cpu.user|cpu.sys host=machine1 region=NW
++cpu.real|!cpu.real|cpu.user|cpu.sys|!net.tcp host=machine1 region=NW
 ```
+
+This encoding is more compact and saves a lot of network bandwidth.
 
 ### Timestamp
 
