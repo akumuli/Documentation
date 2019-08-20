@@ -6,12 +6,13 @@ You can install Akumuli using this repository: [https://packagecloud.io/Lazin/Ak
 
 * Ubuntu 14.04 \(amd64\)
 * Ubuntu 16.04 \(amd64 and arm64\)
+* Ubuntu 18.04 \(amd64 and arm64\)
 * Debian Stretch \(amd64\)
 * Debian Jessie \(amd64\)
 * Red Hat Enterprise Linux 7 \(amd64\)
-* CentOS 7 \(amd64\)
+* CentOS 7 \(amd64  and arm64\)
 
-OSX is supported but packages are not provided yet.
+OSX and 32-bit Linux are supported but packages are not provided yet.
 
 Alternatively, you can use this [Docker repository](https://hub.docker.com/r/akumuli/akumuli/).
 
@@ -117,7 +118,9 @@ You should create configuration file first. This can be done using command:
 OK configuration file created at: "/home/username/.akumulid"
 ```
 
-Now you can edit configuration file `~/.akumulid`. This configuration file contains default settings and comments. Two main configuration parameters are `path` and `nvolumes`. First should contain path to directory when database files should be stored. By default akumuli stores files in `~/.akumuli` directory. You can change this to whatever you like \(I'm using `path=/tmp` to run tests most often\). Second parameter `nvolumes` should contain number of volumes that akumuli can use to store data. Each volume's size is 4Gb so choose this value wisely.
+Now you can edit configuration file `~/.akumulid`. This configuration file contains default settings and comments. Two main configuration parameters are `path` and `nvolumes`. First should contain path to directory when database files should be stored. By default akumuli stores files in `~/.akumuli` directory. You can change this to whatever you like \(I'm using `path=/tmp` to run tests most often\). Second parameter `nvolumes` should contain number of volumes that akumuli can use to store data. By default every volume is 4GB but this can be changed in configuration.
+
+You can set `--config` flag to provide alternative configuration file location for this and every other command.
 
 ### Database creation
 
