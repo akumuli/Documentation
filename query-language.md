@@ -48,7 +48,9 @@ Select query can return more than one series but they should have the same metri
 | [select](query-language.md#select-field) | Yes | Metric name |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
-| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| [group-by](query-language.md#group-by-field) | No | Merge series by tag \(depricated\) |
+| group-by-tag | No | Merge series by tag |
+| [pivot-by-tag](query-language.md#pivot-by-tag-field) | No | Merge series by tag |
 | [order-by](query-language.md#order-by-field) | No | Order of the data-points in the result set |
 | [filter](query-language.md#filter-field) | No | Value based filtering |
 | [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
@@ -62,20 +64,22 @@ This query can be used to calculate aggregates over time-series. The query retur
 | :--- | :--- | :--- |
 | [aggregate](query-language.md#aggregate-field) | Yes | Metric name and aggregation function |
 | [range](query-language.md#range-field) | Yes | Time range |
-| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| group-by-tag | No | Merge series by tag |
+| pivot-by-tag | No | Merge series by tag |
 | [where](query-language.md#where-field) | No | Tag filter |
 | [output](query-language.md#output-field) | No | Set output format |
 
 ### Group-aggregate Query
 
-This query is used to downsample time-series data. It divides all data-points into a series of equally sized bins and computes a value for every bin. The same aggregation functions that can be used with [aggregate query](query-language.md#aggregate-query) can be used with group-aggregate. The difference between the aggregate and group-aggregate queries is that the aggregate produces only one value for every series but the group-aggregate can produce a time-series with fixed step. Also, more than one aggregation function can be used with group-aggregate query.
+This query is used to downsample time-series data. It divides all data-points into a series of equally sized bins and computes a single value for every bin if the bin is not empty. If the bin is empty it doesn't produce any value. The same aggregation functions that can be used with [aggregate query](query-language.md#aggregate-query) can be used with group-aggregate. The difference between the aggregate and group-aggregate queries is that the aggregate produces only one value for every series but the group-aggregate can produce a time-series with fixed step. Also, more than one aggregation function can be used with group-aggregate query.
 
 | Field | Required | Commentary |
 | :--- | :--- | :--- |
 | [group-aggregate](query-language.md#group-aggregate-field) | Yes | Query specific parameters |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
-| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| group-by-tag | No | Merge series by tag |
+| pivot-by-tag | No | Merge series by tag |
 | [order-by](query-language.md#order-by-field) | No | Order of the data-points in the result set |
 | [filter](query-language.md#filter-field) | No | Value filter |
 | [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
@@ -90,7 +94,8 @@ Join query can be used to align several metrics together. The query will group t
 | [join](query-language.md#join-field) | Yes | List of metrics to join |
 | [range](query-language.md#range-field) | Yes | Time range |
 | [where](query-language.md#where-field) | No | Tag filter |
-| [group-by](query-language.md#group-by-field) | No | Series transformation |
+| group-by-tag | No | Merge sereis by tag |
+| pivot-by-tag | No | Merge series by tag |
 | [order-by](query-language.md#order-by-field) | No | Ordering of the data-points in the result set |
 | [filter](query-language.md#filter-field) | No | Value filter |
 | [limit](query-language.md#limit-and-offset-fields) | No | Limit on output size |
@@ -98,7 +103,7 @@ Join query can be used to align several metrics together. The query will group t
 
 ## Query Fields
 
-The query object is JSON encoded. It can have a pre-defined set of fields. Some of this fields are mandatory and other are optional.
+The query object is JSON encoded. It can contain the following set of fields. Some of this fields are mandatory and other are optional. The 'select', 'aggregate', 'group-aggregate', and 'join' fields define query type. Query object should have one of them. 
 
 ### Range Field
 
@@ -108,7 +113,11 @@ Range field denotes the time interval that query should fetch.
 | :--- | :--- | :--- |
 | "range" | { "from": "20180530T123000", "to": "20180530T130000" } | Field should contain a dictionary with two keys, "from" and "to". Both values are timestamps. |
 
-Both timestamps should be encoded using the basic ISO8601 format. The same format is used for data ingestion with RESP protocol. Both "range.from" and "range.to" fields are mandatory for data queries. If "range.from" is less than "range.to" the time-series data points will be returned in accending order \(from old to new\). If "range.from" is greater than "range.to" then the time-series data points will be returned in descending order \(from recent to old\).
+Both timestamps should be encoded using the basic ISO8601 format. The same format is used for data ingestion with RESP protocol. Alternatively, nanosecond precision UNIX timestamps can be used as values. 
+
+Both "range.from" and "range.to" fields are mandatory for most queries. They can be omitted in 'aggregate' query. In this case the 'aggregate' query will compute aggregate for the whole time-series. 
+
+If "range.from" is less than "range.to" the time-series data points will be returned in ascending order \(from old to new\). If "range.from" is greater than "range.to" then the time-series data points will be returned in descending order \(from recent to old\).
 
 ### Select Field
 
@@ -118,7 +127,7 @@ Select field is used to tell Akumuli what metric should be fetched.
 | :--- | :--- | :--- |
 | "select" | "metric.name" | Metric name |
 
-This field defines the query type. If this field is used the query will be a simple [select query](query-language.md#select-query). You can provide only one "select" field. This field can have only one metric name. The query will fetch all series with this metric name. This series can be further filtered by using "where" field.
+This field defines the query type. If this field is used the query will be a [select query](query-language.md#select-query). You can provide only one "select" field. This field can have only one metric name. The query will fetch all series with this metric name. This series can be further filtered by using "where" field.
 
 ### Aggregate Field
 
@@ -128,7 +137,7 @@ Aggregate field is required to create an [aggregate query](query-language.md#agg
 "aggregate": { <metric-name>: <aggregation-function> }
 ```
 
-Only one metric-name and aggregation-function pair can be provided. The available aggregation functions are these:
+At least one metric-name and aggregation-function pair should be provided. The available aggregation functions are these:
 
 | Name | Description |
 | :--- | :--- |
@@ -139,8 +148,10 @@ Only one metric-name and aggregation-function pair can be provided. The availabl
 | sum | Sum of all values in the series |
 | min\_timestamp | The timestamp of the smallest element |
 | max\_timestamp | The timestamp of the largest element |
+| first | The first value in the range |
+| last | The last value in the range |
 
-The aggregate query object computes aggregate only for values inside the specified [time-range](query-language.md#range-field). If there is no values inside the range, the query will return error.
+The aggregate query object computes aggregate only for values inside the specified [time-range](query-language.md#range-field). If there is no values inside the range, the query will return an error.
 
 ### Group-aggregate Field
 
@@ -158,6 +169,7 @@ Group-aggregate field is required to make a [group-aggregate query](query-langua
 | Field | Format | Description |
 | :--- | :--- | :--- |
 | group-aggregate.metric | String | Metric name \(same as in [select](query-language.md#select-field)\) |
+| group-aggregate.metric | List | List of metric names |
 | group-aggregate.step | String | Aggregation step \(10s, 1h, 5m\) |
 | group-aggregate.func | String | Aggregation function |
 | group-aggregate.func | List | List of aggregation functions |
@@ -176,7 +188,7 @@ The series name of the original series changes. The tags stays the same but the 
 
 #### Using list of functions
 
-If more than one aggregation function was used in group-aggregate field the output will have the followind format:
+If more than one aggregation function was used in group-aggregate field the output will have the following format:
 
 ```text
 +cpu:min|cpu:max host=host1\r\n
@@ -186,11 +198,30 @@ If more than one aggregation function was used in group-aggregate field the outp
 +99.7\r\n
 ```
 
-Metric name is changed as described above plus, the [compound series name format](writing-data.md#compound-series-name) is used. The query willl return a series for every aggregation function in the list. This series will have the same timestamps but different values \(since different functions were used to produce them\). Then, these series will be joined together and the [bulk format](writing-data.md#writing-measurements-in-bulk) is used to return them.
+Metric name is changed as described above plus, the [compound series name format](writing-data.md#compound-series-name) is used. The query will return a series for every aggregation function in the list. This series will have the same timestamps but different values \(since different functions were used to produce them\). Then, these series will be joined together and the [bulk format](writing-data.md#writing-measurements-in-bulk) is used to return them.
+
+#### Using list of metrics
+
+If more than one metric name is used the values with different metric names will be interleaved in the output. All function will be applied to every metric name. For instance if the query has two metrics - 'cpu' and 'mem', and two functions - 'min' and 'max' the output will have the following format:
+
+```text
++cpu:min|cpu:max host=host1\r\n
++20170101T221015\r\n
+*2\r\n
++0.05\r\n
++99.7\r\n
++mem:min|mem:max host=host1\r\n
++20170101T221015\r\n
+*2\r\n
++1073741824\r\n
++8589934592\r\n
+```
+
+So the output format is defined only by group-aggregate functions and not by the number of metric names.
 
 ### Join Field
 
-Join field is used to make a join query. This field's type is list. The list should contain valid metric names. Example:
+Join field is used to make a [join query](query-language.md#join-query). This field's type is list. The list should contain valid metric names. Example:
 
 ```text
 {
@@ -198,7 +229,7 @@ Join field is used to make a join query. This field's type is list. The list sho
 }
 ```
 
- Here `cpu`, `mem`, and `iops` is different metric names. Query processor will find series names with the same set of tags in this metrics and join them. E.g. if we have three series - "cpu host=host1", "mem host=host1", and "iops host=host1" - all three series will be joined together producing single series "cpu\|mem\|iops host=host1".  The output will contain records in [bulk format](writing-data.md#writing-measurements-in-bulk).
+ Here `cpu`, `mem`, and `iops` is different metric names. Query processor will find series names with the same set of tags with this metrics and join them. E.g. if we have three series - "cpu host=host1", "mem host=host1", and "iops host=host1" - all three series will be joined together producing single series "cpu\|mem\|iops host=host1".  The output will contain records in [bulk format](writing-data.md#writing-measurements-in-bulk).
 
 ```text
 +cpu|mem|iops host=host1\r\n
@@ -222,13 +253,20 @@ Where field is used to limit number of series returned by the query.
 
 You can specify many tags in one where field. This data in conjunction with metric name \(or names\) will form be used to [search series](query-language.md#data-model) inside the index.
 
-### Group-by Field
+### Group-by Field \(DEPRICATED\)
 
-Group-by field is used to merge several series together. If `group-by` field was used to specify a tag name, all series which names has this tag with the same value will collapse into one. All data points from that series will be joined together. The resulting time-seires will contain all data-points from the original series. The series name will contain only those tags that was specified in `group-by` field.
+This field was replaced with \`pivot-by-tag\` field.
+
+### Pivot-by-tag Field
+
+In a nutshell, `pivot-by-tag` tells query processor to remove all tags from series name except the ones that was listed. After that all series that have matching tags are considered equal and merged together. 
+
+For instance, if `pivot-by-tag` field was used to specify a single tag name, all series with this tag with the same value will collapse into one. All data points from that series will be joined together. The resulting time-series will contain all data-points from the original series. The series name will contain only the specified tag. It's also possible to specify more than one tag. 
 
 | Field | Format | Description |
 | :--- | :--- | :--- |
-| "group-by" | \[ "tag1", "tag2", ..., "tagN" \] | The list of tags that resulting series name should have. |
+| pivot-by-tag | \[ "tag1", "tag2", ..., "tagN" \] | The list of tags that resulting series name should have. |
+| pivot-by-tag | "tag-name" | The single tag the resulting series should have. |
 
 Suppose that you need to store the valve pressure measurements. Pressure in each valve is measured by two separate sensors so you're end up with this schema: `pressure_kPa valve_num=XXX sensor_num=YYY`. Here we have `pressure_kPa` metric with two tags: `valve_num` and `sensor_num`. If you query this series you will get the following results \(_\r\n_ omitted\):
 
@@ -248,7 +286,7 @@ Suppose that you need to store the valve pressure measurements. Pressure in each
 ...
 ```
 
- Each combination of sensor and valve produces its own time-series. If you want to group data only by valve you can use "group-by" field. If you add a `"group-by": [ "valve_num" ]` field to the query the result will look like this:
+Each combination of sensor and valve produces its own time-series. If you want to group data only by valve you can use "pivot-by-tag" field. If you add a `"pivot-by-tag": [ "valve_num" ]` field to the query the result will look like this:
 
 ```text
 +pressure_kPa valve_num=0
@@ -261,6 +299,35 @@ Suppose that you need to store the valve pressure measurements. Pressure in each
 +20160118T171000.000000000
 +208.0
 +pressure_kPa valve_num=1
++20160118T171000.000000000
++208.2
+...
+```
+
+Note that the timestamps and values are the same. Only series names are different.
+
+### Group-by-tag
+
+The `group-by-tag` tells query processor to remove listed tags from series name. After that all series that have matching tags are considered equal and merged together. 
+
+| Field | Format | Description |
+| :--- | :--- | :--- |
+| group-by-tag | \["tag1", ..., "tagN"\] | List of tag to remove from series |
+| group-by-tag | "tag-name" | Tag to remove from series name |
+
+The `group-by-tag` is the opposite of `pivot-by-tag`. Given the example in previous section query with `"group-by-tag": ["valve_num"]` would produce the following output:
+
+```text
++pressure_kPa sensor_num=0
++20160118T171000.000000000
++204.0
++pressure_kPa sensor_num=1
++20160118T171000.000000000
++204.1
++pressure_kPa sensor_num=0
++20160118T171000.000000000
++208.0
++pressure_kPa sensor_num=1
 +20160118T171000.000000000
 +208.2
 ...
