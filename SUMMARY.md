@@ -1,7 +1,7 @@
 # Table of contents
 
-* [Introduction](README.md)
-* [Introduction](introduction-1.md)
+* [Hardware Requirements](README.md)
+* [Introduction](master.md)
 * [API Endpoints](api-endpoints.md)
 * [Getting Started](getting-started.md)
 * [Data Model](data-model.md)
