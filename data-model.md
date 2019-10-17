@@ -99,5 +99,5 @@ All data points of each series should be sorted by the timestamp. You can write 
 
 The **metric value** can be an integer or a floating point number. The recommended formatting method is to use a “%.17g” format string \(using printf syntax\) or any equivalent. This guarantees that the precision won’t be lost. Subsequent metric values can have equal timestamps. Nanosecond precision is supported otherwise.
 
-The **event value** can be a string up to 4KB in size. Subsequent events in the same series should have increasing timestamps with microsecond precision.
+The **event value** can be a string up to 1KB in size. Subsequent events in the same series should have increasing timestamps with microsecond precision.
 
